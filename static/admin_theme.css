@@ -330,13 +330,82 @@ body > #jazzy-sidebar {
 .nav-tabs .nav-link.active { border-bottom: 3px solid var(--admin-cyan) !important; color: var(--admin-cyan) !important; font-weight: 700 !important; }
 
 @media (max-width: 767.98px) {
-    .content-wrapper .table-responsive,
-    .content-wrapper .results { overflow-x: auto; }
+    body {
+        overflow-x: hidden !important;
+    }
+
+    .wrapper,
+    .content-wrapper,
+    .app-main,
+    .main-footer {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .main-sidebar,
+    .app-sidebar {
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+    }
+
+    .content-wrapper {
+        padding: 0.75rem !important;
+        margin-left: 0 !important;
+    }
+
+    .content-wrapper > .container-fluid {
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
 
     .content-wrapper .card,
     .content-wrapper .module,
     .content-wrapper fieldset,
-    .content-wrapper .results { border-radius: 10px !important; }
+    .content-wrapper .results,
+    .content-wrapper .table-responsive,
+    .content-wrapper .dashboard-section,
+    .content-wrapper .dashboard-kpi,
+    .content-wrapper .form-row,
+    .content-wrapper .form-group {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow-x: hidden !important;
+    }
+
+    .content-wrapper .table-responsive,
+    .content-wrapper .results {
+        overflow-x: auto !important;
+    }
+
+    .content-wrapper .card,
+    .content-wrapper .module,
+    .content-wrapper fieldset,
+    .content-wrapper .results {
+        border-radius: 10px !important;
+    }
+
+    .main-sidebar .nav-link,
+    .app-sidebar .nav-link {
+        padding: 0.7rem 0.85rem !important;
+        white-space: normal !important;
+    }
+
+    .btn,
+    .submit-row input,
+    .object-tools a,
+    .dropdown-toggle,
+    .dropdown-item {
+        white-space: normal !important;
+    }
+
+    .selector,
+    .field-permissions .selector {
+        min-width: 0 !important;
+        width: 100% !important;
+    }
 }
 
 /* Jazzmin UI builder: keep customization controls visible on the dark theme. */
