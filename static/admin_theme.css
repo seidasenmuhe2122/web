@@ -345,6 +345,14 @@ body > #jazzy-sidebar {
         padding-right: 0 !important;
         overflow-x: hidden !important;
         box-sizing: border-box !important;
+        background-color: #1a222b !important;
+    }
+
+    html,
+    body {
+        min-height: 100% !important;
+        height: auto !important;
+        background-color: #1a222b !important;
     }
 
     body {
@@ -358,6 +366,7 @@ body > #jazzy-sidebar {
         left: 0 !important;
         right: 0 !important;
         transform: none !important;
+        background-color: #1a222b !important;
     }
 
     .main-sidebar,
