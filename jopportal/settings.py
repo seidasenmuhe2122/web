@@ -35,7 +35,7 @@ else:
 
 ALLOWED_HOSTS = ['my-project-njlw.onrender.com', 'localhost', '127.0.0.1']
 
-LANGUAGE_CODE = 'en'
+LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = [
     ('en', 'English'),

@@ -234,16 +234,16 @@ class SiteSetting(models.Model):
         ('list', 'List display'),
     ]
 
-    site_name = models.CharField(max_length=100, default="AFRI JOB ETHIOPIA", verbose_name="የዌብሳይት ስም")
-    site_logo = models.ImageField(upload_to='site/', blank=True, null=True, verbose_name="የዌብሳይት ሎጎ")
-    site_favicon = models.ImageField(upload_to='site/', blank=True, null=True, verbose_name="Favicon (ትንሹ ሎጎ)")
+    site_name = models.CharField(max_length=100, default="AFRI JOB ETHIOPIA", verbose_name="Website name")
+    site_logo = models.ImageField(upload_to='site/', blank=True, null=True, verbose_name="Website logo")
+    site_favicon = models.ImageField(upload_to='site/', blank=True, null=True, verbose_name="Website favicon")
     header_text = models.CharField(max_length=200, blank=True, default='AFRI JOB ETHIOPIA')
     top_bar_text = models.TextField(blank=True, default='Find your next opportunity in Ethiopia')
     background_text = models.TextField(blank=True, default='AFRI JOB ETHIOPIA')
     background_image = models.ImageField(upload_to='site/backgrounds/', blank=True, null=True)
-    footer_text = models.TextField(blank=True, verbose_name="የግርጌ (Footer) ፅሁፍ")
-    contact_email = models.EmailField(blank=True, verbose_name="የመገናኛ ኢሜይል")
-    contact_phone = models.CharField(max_length=20, blank=True, verbose_name="የመገናኛ ስልክ")
+    footer_text = models.TextField(blank=True, verbose_name="Footer text")
+    contact_email = models.EmailField(blank=True, verbose_name="Contact email")
+    contact_phone = models.CharField(max_length=20, blank=True, verbose_name="Contact phone")
     contact_action_enabled = models.BooleanField(default=False, verbose_name='Show contact action button')
     contact_action_label = models.CharField(max_length=80, blank=True, default='Contact us directly')
     contact_action_url = models.URLField(blank=True, verbose_name='Contact action URL')
@@ -362,8 +362,8 @@ class SiteSetting(models.Model):
     )
 
     class Meta:
-        verbose_name = "Website Setting"
-        verbose_name_plural = "Website Settings"
+        verbose_name = "Website setting"
+        verbose_name_plural = "Website settings"
 
     def __str__(self):
         return self.site_name
@@ -506,7 +506,7 @@ class SentEmail(models.Model):
     subject = models.CharField(max_length=255, verbose_name='Subject')
     message = models.TextField(verbose_name='Message')
     attachment_names = models.JSONField(default=list, blank=True)
-    sent_at = models.DateTimeField(default=timezone.now, verbose_name='የተላከበት ሰዓት')
+    sent_at = models.DateTimeField(default=timezone.now, verbose_name='Sent at')
 
     class Meta:
         ordering = ['-sent_at']
