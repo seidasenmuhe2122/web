@@ -1,0 +1,2281 @@
+:root {
+    --admin-bg: #eef4fb;
+    --admin-surface: #ffffff;
+    --admin-text: #1e293b;
+    --admin-muted: #64748b;
+    --admin-primary: #2563eb;
+    --admin-teal: #0f766e;
+    --admin-border: #d8e2ef;
+    --admin-3d-shadow: 0 18px 45px rgba(15, 23, 42, 0.22), 0 8px 18px rgba(15, 23, 42, 0.12);
+    --admin-3d-shadow-hover: 0 24px 55px rgba(15, 23, 42, 0.28), 0 12px 22px rgba(15, 23, 42, 0.15);
+    --admin-3d-radius: 14px;
+}
+
+body,
+.content-wrapper {
+    background: var(--admin-bg) !important;
+    color: var(--admin-text);
+}
+
+.content-wrapper h1,
+.content-wrapper h2,
+.content-wrapper h3,
+.content-wrapper h4,
+.content-wrapper h5,
+.content-wrapper h6,
+.content-wrapper .card-title {
+    color: #12345b !important;
+    font-weight: 700;
+}
+
+.content-wrapper .text-muted,
+.content-wrapper small,
+.content-wrapper .help,
+.content-wrapper .helptext {
+    color: var(--admin-muted) !important;
+}
+
+.content-wrapper .card,
+.content-wrapper .module,
+.content-wrapper .box,
+.content-wrapper .results,
+.content-wrapper .table-responsive {
+    background: #f8fbff !important;
+    color: var(--admin-text);
+    border-color: var(--admin-border);
+}
+
+.content-wrapper .card-header,
+.content-wrapper .module caption {
+    background: #eaf2ff !important;
+    color: #12345b !important;
+}
+
+.content-wrapper .table,
+.content-wrapper .table td,
+.content-wrapper .table th,
+.content-wrapper .results table,
+.content-wrapper .results table td,
+.content-wrapper .results table th {
+    color: var(--admin-text) !important;
+    border-color: var(--admin-border) !important;
+}
+
+.content-wrapper .table thead th,
+.content-wrapper .results thead th {
+    background: #dbeafe !important;
+    color: #12345b !important;
+}
+
+.content-wrapper a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: var(--admin-primary);
+}
+
+.content-wrapper .btn-primary,
+.content-wrapper .submit-row .default,
+.content-wrapper .object-tools a {
+    background: var(--admin-primary) !important;
+    border-color: var(--admin-primary) !important;
+    color: #fff !important;
+}
+
+.content-wrapper .btn-success {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #fff !important;
+}
+
+.content-wrapper input:not([type="checkbox"]):not([type="radio"]),
+.content-wrapper textarea,
+.content-wrapper select,
+.content-wrapper .select2-selection {
+    background: #ffffff !important;
+    color: var(--admin-text) !important;
+    border-color: #b8c9dc !important;
+}
+
+.content-wrapper input::placeholder,
+.content-wrapper textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+.dashboard-section,
+.dashboard-kpi {
+    background: #f8fbff !important;
+    color: var(--admin-text) !important;
+    border-color: var(--admin-border) !important;
+}
+
+.dashboard-section h2 {
+    color: #12345b !important;
+}
+
+.dashboard-kpi strong {
+    color: var(--admin-primary) !important;
+}
+
+.dashboard-table,
+.dashboard-table th,
+.dashboard-table td {
+    color: var(--admin-text) !important;
+    border-color: var(--admin-border) !important;
+}
+
+.dashboard-table th {
+    color: #12345b !important;
+}
+
+.dashboard {
+    background: #111827 !important;
+}
+
+.dashboard .app-main,
+.dashboard .app-main > .container-fluid,
+.dashboard .app-main .container-fluid {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.dashboard .content-wrapper,
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi {
+    background: linear-gradient(145deg, #0f172a, #172554) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-color: rgba(125, 211, 252, .24) !important;
+    color: #e5efff !important;
+}
+
+.dashboard .dashboard-section {
+    opacity: 1 !important;
+    isolation: isolate;
+}
+
+.dashboard .dashboard-section {
+    box-shadow: 0 14px 30px rgba(2, 6, 23, .28);
+}
+
+.dashboard .dashboard-section h2 {
+    color: #f8fbff !important;
+    font-size: 1.25rem;
+}
+
+.dashboard .dashboard-kpis .dashboard-kpi:nth-child(1) {
+    background: linear-gradient(135deg, #123b5d, #075985) !important;
+}
+
+.dashboard .dashboard-kpis .dashboard-kpi:nth-child(2) {
+    background: linear-gradient(135deg, #14532d, #047857) !important;
+}
+
+.dashboard .dashboard-kpis .dashboard-kpi:nth-child(3) {
+    background: linear-gradient(135deg, #312e81, #4338ca) !important;
+}
+
+.dashboard .dashboard-kpis .dashboard-kpi:nth-child(4) {
+    background: linear-gradient(135deg, #78350f, #b45309) !important;
+}
+
+.dashboard .dashboard-kpi {
+    color: #cfe8ff !important;
+    border-radius: 11px;
+}
+
+.dashboard .dashboard-kpi strong {
+    color: #ffffff !important;
+}
+
+.dashboard .dashboard-table,
+.dashboard .dashboard-table th,
+.dashboard .dashboard-table td {
+    color: #dbeafe !important;
+    border-color: rgba(148, 163, 184, .22) !important;
+}
+
+.dashboard .dashboard-table th {
+    color: #7dd3fc !important;
+}
+
+.dashboard .dashboard-table a {
+    color: #67e8f9 !important;
+}
+
+.dashboard .dashboard-section .card {
+    background: #172554 !important;
+    color: #dbeafe !important;
+    border-color: rgba(125, 211, 252, .22) !important;
+}
+
+.dashboard .dashboard-section .card-header {
+    background: #1e3a8a !important;
+    color: #ffffff !important;
+}
+
+.dashboard .dashboard-section .table td,
+.dashboard .dashboard-section .table th {
+    color: #dbeafe !important;
+    border-color: rgba(148, 163, 184, .2) !important;
+}
+
+.ui-customiser,
+.ui-customiser .control-sidebar-content {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+.ui-customiser h5,
+.ui-customiser label,
+.ui-customiser p,
+.ui-customiser .form-check-label,
+.ui-customiser .control-sidebar-heading {
+    color: #e2e8f0 !important;
+}
+
+.ui-customiser select,
+.ui-customiser .form-control {
+    background: #1e293b !important;
+    border-color: #64748b !important;
+    color: #f8fafc !important;
+}
+
+.ui-customiser input[type="checkbox"] {
+    accent-color: #38bdf8;
+}
+
+.ui-customiser .btn {
+    color: #ffffff !important;
+}
+
+/* Consistent visual treatment for the main editable admin sections. */
+body:not(.dashboard):not(.app-advertisement) .app-legalpage .content-wrapper,
+.app-job .content-wrapper,
+.app-contactmessage .content-wrapper,
+.app-sitesetting .content-wrapper {
+    background: #eaf2fb !important;
+    color: #1e293b !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage .card,
+.app-job .card,
+.app-contactmessage .card,
+.app-sitesetting .card,
+.app-legalpage .module,
+.app-job .module,
+.app-contactmessage .module,
+.app-sitesetting .module,
+.app-legalpage fieldset,
+.app-job fieldset,
+.app-contactmessage fieldset,
+.app-sitesetting fieldset {
+    background: #ffffff !important;
+    border: 1px solid #cbdbea !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 24px rgba(30, 64, 175, .10) !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage .card-header,
+.app-job .card-header,
+.app-contactmessage .card-header,
+.app-sitesetting .card-header,
+.app-legalpage fieldset h2,
+.app-job fieldset h2,
+.app-contactmessage fieldset h2,
+.app-sitesetting fieldset h2 {
+    background: linear-gradient(135deg, #12345b, #1d4ed8) !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage label,
+.app-job label,
+.app-contactmessage label,
+.app-sitesetting label,
+.app-legalpage .form-row,
+.app-job .form-row,
+.app-contactmessage .form-row,
+.app-sitesetting .form-row {
+    color: #334155 !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage input:not([type="checkbox"]):not([type="radio"]),
+.app-legalpage textarea,
+.app-legalpage select,
+.app-job input:not([type="checkbox"]):not([type="radio"]),
+.app-job textarea,
+.app-job select,
+.app-contactmessage input:not([type="checkbox"]):not([type="radio"]),
+.app-contactmessage textarea,
+.app-contactmessage select,
+.app-sitesetting input:not([type="checkbox"]):not([type="radio"]),
+.app-sitesetting textarea,
+.app-sitesetting select {
+    background: #f8fbff !important;
+    color: #1e293b !important;
+    border: 1px solid #9fb5cc !important;
+    border-radius: 8px !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage input:focus,
+.app-legalpage textarea:focus,
+.app-legalpage select:focus,
+.app-job input:focus,
+.app-job textarea:focus,
+.app-job select:focus,
+.app-contactmessage input:focus,
+.app-contactmessage textarea:focus,
+.app-contactmessage select:focus,
+.app-sitesetting input:focus,
+.app-sitesetting textarea:focus,
+.app-sitesetting select:focus {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .16) !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage .results,
+.app-job .results,
+.app-contactmessage .results,
+.app-sitesetting .results {
+    background: #ffffff !important;
+    border: 1px solid #cbdbea !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage .results th,
+.app-job .results th,
+.app-contactmessage .results th,
+.app-sitesetting .results th {
+    background: #dbeafe !important;
+    color: #12345b !important;
+}
+
+body:not(.dashboard):not(.app-advertisement) .app-legalpage .results td,
+.app-job .results td,
+.app-contactmessage .results td,
+.app-sitesetting .results td {
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+.app-job .content-wrapper {
+    background: #eef4fb !important;
+}
+
+.app-job .content-wrapper .card,
+.app-job .content-wrapper .module,
+.app-job .content-wrapper .results,
+.app-job .content-wrapper .table-responsive {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #d6e2ef !important;
+    box-shadow: 0 8px 20px rgba(30, 64, 175, .08) !important;
+}
+
+.app-job .content-wrapper .results table,
+.app-job .content-wrapper .results tbody,
+.app-job .content-wrapper .results tr,
+.app-job .content-wrapper .results td,
+.app-job .content-wrapper .results th {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+.app-job .content-wrapper .results thead th {
+    background: #e8f1fb !important;
+    color: #173b63 !important;
+}
+
+.app-job .content-wrapper .results tbody tr:hover td {
+    background: #f0f7ff !important;
+}
+
+.app-job .content-wrapper input,
+.app-job .content-wrapper select,
+.app-job .content-wrapper .select2-selection {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #9fb5cc !important;
+}
+
+.app-job .content-wrapper .btn-primary,
+.app-job .content-wrapper .submit-row .default,
+.app-job .content-wrapper .object-tools a {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.app-job .content-wrapper .btn-success {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
+body.model-advertisement .content-wrapper {
+    background: #eef4fb !important;
+}
+
+body.model-advertisement .content-wrapper .results,
+body.model-advertisement .content-wrapper .results table,
+body.model-advertisement .content-wrapper .results tbody,
+body.model-advertisement .content-wrapper .results tr,
+body.model-advertisement .content-wrapper .results td,
+body.model-advertisement .content-wrapper .results th {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+body.model-advertisement .content-wrapper .results thead th {
+    background: #e8f1fb !important;
+    color: #173b63 !important;
+    font-weight: 700;
+}
+
+body.model-advertisement .content-wrapper .results tbody tr:hover td {
+    background: #f0f7ff !important;
+}
+
+body.model-advertisement .content-wrapper .results a:not(.btn) {
+    color: #2563eb !important;
+}
+
+body.model-advertisement .content-wrapper .paginator,
+body.model-advertisement .content-wrapper .actions,
+body.model-advertisement .content-wrapper .actions + .results {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+body.model-advertisement .content-wrapper .actions select,
+body.model-advertisement .content-wrapper .actions button,
+body.model-advertisement .content-wrapper .paginator a {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    border: 1px solid #9fb5cc !important;
+    border-radius: 7px !important;
+}
+
+body.model-advertisement .content-wrapper .actions button,
+body.model-advertisement .content-wrapper .paginator a {
+    color: #2563eb !important;
+}
+
+body.model-advertisement .content-wrapper .actions button:hover,
+body.model-advertisement .content-wrapper .paginator a:hover {
+    background: #e8f1fb !important;
+}
+
+body.model-advertisement .content-wrapper input[type="checkbox"] {
+    accent-color: #2563eb;
+}
+
+body.model-advertisement .app-main .card,
+body.model-advertisement .app-main .table-responsive,
+body.model-advertisement #result_list {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+body.model-advertisement #result_list thead th {
+    background: #e8f1fb !important;
+    color: #173b63 !important;
+}
+
+body.model-advertisement #result_list tbody td {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+body.model-advertisement #result_list tbody tr:hover td {
+    background: #f0f7ff !important;
+}
+
+body.model-advertisement .app-main .actions,
+body.model-advertisement .app-main .paginator {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+/* Professional admin shell for non-analytics pages. */
+body:not(.dashboard):not(.model-advertisement) {
+    background: #eef3f8 !important;
+    color: #243447 !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main {
+    background: #eef3f8 !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main > .container-fluid {
+    max-width: 1480px;
+    margin: 0 auto;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-sidebar {
+    background: #172b4d !important;
+    box-shadow: 4px 0 18px rgba(15, 23, 42, .14);
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-sidebar .nav-link,
+body:not(.dashboard):not(.model-advertisement) .app-sidebar .brand-link {
+    color: #dbeafe !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-sidebar .nav-link:hover,
+body:not(.dashboard):not(.model-advertisement) .app-sidebar .nav-link.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .card,
+body:not(.dashboard):not(.model-advertisement) .app-main .module,
+body:not(.dashboard):not(.model-advertisement) .app-main .box,
+body:not(.dashboard):not(.model-advertisement) .app-main fieldset,
+body:not(.dashboard):not(.model-advertisement) .app-main .results,
+body:not(.dashboard):not(.model-advertisement) .app-main .table-responsive {
+    background: #ffffff !important;
+    color: #243447 !important;
+    border: 1px solid #d7e1ec !important;
+    border-radius: 10px !important;
+    box-shadow: 0 6px 18px rgba(30, 64, 175, .08) !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main h1,
+body:not(.dashboard):not(.model-advertisement) .app-main h2,
+body:not(.dashboard):not(.model-advertisement) .app-main h3,
+body:not(.dashboard):not(.model-advertisement) .app-main h4,
+body:not(.dashboard):not(.model-advertisement) .app-main h5,
+body:not(.dashboard):not(.model-advertisement) .app-main h6 {
+    color: #163b63 !important;
+    font-weight: 700;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main label,
+body:not(.dashboard):not(.model-advertisement) .app-main .form-row,
+body:not(.dashboard):not(.model-advertisement) .app-main .helptext {
+    color: #40546b !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main input:not([type="checkbox"]):not([type="radio"]),
+body:not(.dashboard):not(.model-advertisement) .app-main textarea,
+body:not(.dashboard):not(.model-advertisement) .app-main select,
+body:not(.dashboard):not(.model-advertisement) .app-main .select2-selection {
+    background: #fbfdff !important;
+    color: #243447 !important;
+    border: 1px solid #afc0d2 !important;
+    border-radius: 7px !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main input:focus,
+body:not(.dashboard):not(.model-advertisement) .app-main textarea:focus,
+body:not(.dashboard):not(.model-advertisement) .app-main select:focus,
+body:not(.dashboard):not(.model-advertisement) .app-main .select2-container--focus .select2-selection {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .14) !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .table,
+body:not(.dashboard):not(.model-advertisement) .app-main .results table {
+    color: #334155 !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .table th,
+body:not(.dashboard):not(.model-advertisement) .app-main .results th {
+    background: #e8f1fb !important;
+    color: #163b63 !important;
+    border-color: #d7e1ec !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .table td,
+body:not(.dashboard):not(.model-advertisement) .app-main .results td {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #e1e8f0 !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .table tbody tr:hover td,
+body:not(.dashboard):not(.model-advertisement) .app-main .results tbody tr:hover td {
+    background: #f3f8ff !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .btn-primary,
+body:not(.dashboard):not(.model-advertisement) .app-main .submit-row .default,
+body:not(.dashboard):not(.model-advertisement) .app-main .object-tools a {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main .btn-success {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
+body:not(.dashboard):not(.model-advertisement) .app-main a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: #2563eb !important;
+}
+
+/* Final unified admin palette disabled: preserve the previous color theme. */
+
+/* Modern admin shell: charcoal navigation, crisp workspace, and pastel actions. */
+:root {
+    --admin-charcoal: #20252d;
+    --admin-charcoal-deep: #171b21;
+    --admin-workspace: #e7ecf1;
+    --admin-surface: #f9fbfc;
+    --admin-ink: #24313f;
+    --admin-muted: #586777;
+    --admin-line: #cbd5df;
+    --admin-pastel-blue: #dbeafe;
+    --admin-pastel-mint: #d8f3e8;
+    --admin-pastel-yellow: #fff1c7;
+    --admin-pastel-rose: #ffe0e6;
+    --admin-accent: #55708f;
+    --admin-shadow: 0 8px 24px rgba(28, 35, 45, 0.07);
+}
+
+html,
+body,
+body.login {
+    font-family: "Segoe UI", "Helvetica Neue", sans-serif !important;
+    color: var(--admin-ink) !important;
+}
+
+body,
+.wrapper,
+.content-wrapper,
+.app-main,
+.app-main > .container-fluid {
+    background: var(--admin-workspace) !important;
+}
+
+.main-sidebar,
+.app-sidebar,
+.main-sidebar::before {
+    background: var(--admin-charcoal) !important;
+}
+
+.main-sidebar,
+.app-sidebar {
+    box-shadow: 5px 0 24px rgba(15, 18, 23, 0.18) !important;
+}
+
+.brand-link,
+.app-sidebar .brand-link {
+    background: var(--admin-charcoal-deep) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
+}
+
+.main-sidebar .nav-header,
+.app-sidebar .nav-header {
+    color: #9ca8b6 !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.main-sidebar .nav-link,
+.app-sidebar .nav-link {
+    border-radius: 9px !important;
+    color: #cbd2dc !important;
+    margin: 3px 10px !important;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease !important;
+}
+
+.main-sidebar .nav-link:hover,
+.app-sidebar .nav-link:hover {
+    background: rgba(255,255,255,0.09) !important;
+    color: #ffffff !important;
+    transform: translateX(2px);
+}
+
+.main-sidebar .nav-link.active,
+.app-sidebar .nav-link.active {
+    background: #3a4654 !important;
+    box-shadow: inset 3px 0 0 #a8d8e8 !important;
+    color: #ffffff !important;
+}
+
+.main-sidebar .nav-icon,
+.app-sidebar .nav-icon {
+    color: #a8d8e8 !important;
+    font-size: 0.9rem !important;
+}
+
+.main-header,
+.app-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--admin-line) !important;
+    box-shadow: 0 2px 12px rgba(28, 35, 45, 0.04) !important;
+}
+
+.content-header h1,
+.content-wrapper h1,
+.content-wrapper h2,
+.content-wrapper h3,
+.content-wrapper h4,
+.content-wrapper h5,
+.content-wrapper h6 {
+    color: var(--admin-ink) !important;
+    font-weight: 700 !important;
+}
+
+.content-wrapper .card,
+.content-wrapper .module,
+.content-wrapper .box,
+.content-wrapper fieldset,
+.content-wrapper .results,
+.content-wrapper .table-responsive,
+.dashboard-section,
+.dashboard-kpi {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-line) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--admin-shadow) !important;
+    color: var(--admin-ink) !important;
+}
+
+.content-wrapper .card-header,
+.content-wrapper .module caption,
+.content-wrapper fieldset h2 {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--admin-line) !important;
+    border-radius: 14px 14px 0 0 !important;
+    color: var(--admin-ink) !important;
+}
+
+.content-wrapper input:not([type="checkbox"]):not([type="radio"]),
+.content-wrapper textarea,
+.content-wrapper select,
+.content-wrapper .select2-selection,
+.content-wrapper .select2-selection--single {
+    background: #ffffff !important;
+    border: 1px solid #d5dce5 !important;
+    border-radius: 9px !important;
+    color: var(--admin-ink) !important;
+    min-height: 38px;
+    transition: border-color 160ms ease, box-shadow 160ms ease !important;
+}
+
+.content-wrapper input:focus,
+.content-wrapper textarea:focus,
+.content-wrapper select:focus,
+.content-wrapper .select2-container--focus .select2-selection {
+    border-color: #94b8c8 !important;
+    box-shadow: 0 0 0 3px rgba(168, 216, 232, 0.3) !important;
+    outline: none !important;
+}
+
+.content-wrapper .btn,
+.content-wrapper .object-tools a,
+.content-wrapper .submit-row input,
+.content-wrapper .submit-row a {
+    border-radius: 9px !important;
+    font-weight: 600 !important;
+    transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease !important;
+}
+
+.content-wrapper .btn:hover,
+.content-wrapper .object-tools a:hover,
+.content-wrapper .submit-row input:hover,
+.content-wrapper .submit-row a:hover {
+    box-shadow: 0 5px 14px rgba(28, 35, 45, 0.12) !important;
+    filter: brightness(0.98);
+    transform: translateY(-1px);
+}
+
+.content-wrapper .btn-primary,
+.content-wrapper .submit-row .default,
+.content-wrapper .object-tools a {
+    background: var(--admin-pastel-blue) !important;
+    border-color: #bdd4f3 !important;
+    color: #315477 !important;
+}
+
+.content-wrapper .btn-success {
+    background: var(--admin-pastel-mint) !important;
+    border-color: #b8e5d1 !important;
+    color: #28634f !important;
+}
+
+.content-wrapper .btn-warning {
+    background: var(--admin-pastel-yellow) !important;
+    border-color: #f3dc9a !important;
+    color: #785e1d !important;
+}
+
+.content-wrapper .btn-danger {
+    background: var(--admin-pastel-rose) !important;
+    border-color: #f4bdc8 !important;
+    color: #8b3e50 !important;
+}
+
+.content-wrapper .table th,
+.content-wrapper .results th {
+    background: #f1f4f7 !important;
+    border-color: var(--admin-line) !important;
+    color: #4d5a69 !important;
+    font-size: 0.76rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.content-wrapper .table td,
+.content-wrapper .results td {
+    background: #ffffff !important;
+    border-color: var(--admin-line) !important;
+    color: var(--admin-ink) !important;
+}
+
+.content-wrapper .table tbody tr:hover td,
+.content-wrapper .results tbody tr:hover td {
+    background: #fbfcfd !important;
+}
+
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi,
+.dashboard .content-wrapper,
+.dashboard .dashboard-section .card {
+    background: var(--admin-surface) !important;
+    border-color: var(--admin-line) !important;
+    color: var(--admin-ink) !important;
+}
+
+.dashboard .dashboard-kpi strong,
+.dashboard .dashboard-section h2,
+.dashboard .dashboard-table,
+.dashboard .dashboard-table th,
+.dashboard .dashboard-table td {
+    color: var(--admin-ink) !important;
+}
+
+@media (max-width: 767.98px) {
+    .main-sidebar,
+    .app-sidebar {
+        box-shadow: 3px 0 16px rgba(15, 18, 23, 0.22) !important;
+    }
+
+    .content-wrapper .card,
+    .content-wrapper .module,
+    .content-wrapper fieldset,
+    .content-wrapper .results {
+        border-radius: 10px !important;
+    }
+
+    .content-wrapper .table-responsive {
+        overflow-x: auto;
+    }
+}
+
+/* Users table refinement. */
+body.app-auth.model-user .app-main #changelist {
+    background: transparent !important;
+}
+
+body.app-auth.model-user .app-main #changelist .results {
+    background: #ffffff !important;
+    border: 1px solid #d9e1e8 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 26px rgba(31, 42, 55, 0.08) !important;
+    overflow: hidden !important;
+}
+
+body.app-auth.model-user .app-main #result_list thead th,
+body.app-auth.model-user .app-main #result_list thead th a {
+    background: #f1f5f8 !important;
+    color: #344454 !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+body.app-auth.model-user .app-main #result_list thead th {
+    border-bottom: 2px solid #d9e1e8 !important;
+    padding: 0.95rem 0.9rem !important;
+}
+
+body.app-auth.model-user .app-main #result_list tbody td {
+    color: #293746 !important;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    padding: 0.95rem 0.9rem !important;
+}
+
+body.app-auth.model-user .app-main #result_list tbody tr {
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+body.app-auth.model-user .app-main #result_list tbody tr:hover {
+    position: relative;
+    transform: translateY(-1px);
+    z-index: 1;
+}
+
+body.app-auth.model-user .app-main #result_list tbody tr:hover td {
+    background: #f5fafc !important;
+    border-bottom-color: #c9dce4 !important;
+}
+
+body.app-auth.model-user .app-main #result_list tbody td:first-child a,
+body.app-auth.model-user .app-main #result_list tbody th a {
+    align-items: center;
+    color: #315e78 !important;
+    display: inline-flex;
+    gap: 0.45rem;
+    font-weight: 700;
+}
+
+body.app-auth.model-user .app-main #result_list tbody td:first-child a::before,
+body.app-auth.model-user .app-main #result_list tbody th a::before {
+    color: #78aabd;
+    content: "\\f2bd";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    transition: color 160ms ease, transform 160ms ease;
+}
+
+body.app-auth.model-user .app-main #result_list tbody td:first-child a:hover::before,
+body.app-auth.model-user .app-main #result_list tbody th a:hover::before {
+    color: #315e78;
+    transform: scale(1.12);
+}
+
+body.app-auth.model-user .app-main #result_list .action-checkbox-column,
+body.app-auth.model-user .app-main #result_list .action-checkbox {
+    text-align: center;
+    width: 3rem;
+}
+
+body.app-auth.model-user .app-main #result_list input[type="checkbox"] {
+    accent-color: #78aabd;
+    cursor: pointer;
+    height: 1rem;
+    width: 1rem;
+}
+
+body.app-auth.model-user .app-main .actions,
+body.app-auth.model-user .app-main .paginator {
+    border-radius: 12px !important;
+    box-shadow: 0 5px 16px rgba(31, 42, 55, 0.05) !important;
+}
+
+body.app-auth.model-user .app-main .actions button,
+body.app-auth.model-user .app-main .paginator a {
+    background: #e1f1f4 !important;
+    border: 1px solid #c4e0e5 !important;
+    color: #315e78 !important;
+    transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease !important;
+}
+
+body.app-auth.model-user .app-main .actions button:hover,
+body.app-auth.model-user .app-main .paginator a:hover {
+    background: #cfe8ed !important;
+    box-shadow: 0 4px 10px rgba(49, 94, 120, 0.14) !important;
+    transform: translateY(-1px);
+}
+
+body.app-auth.model-user .app-main #changelist .results::before,
+body.app-auth.model-group .app-main #changelist .results::before {
+    background: linear-gradient(90deg, #8fc8d5, #c7a8e8, #f2c979);
+    content: "";
+    display: block;
+    height: 4px;
+    width: 100%;
+}
+
+body.app-auth.model-group .app-main #result_list tbody td:first-child a::before {
+    color: #a88acb;
+    content: "\\f0c0";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    margin-right: 0.45rem;
+    transition: color 160ms ease, transform 160ms ease;
+}
+
+body.app-auth.model-group .app-main #result_list tbody td:first-child a:hover::before {
+    color: #76539e;
+    transform: scale(1.12);
+}
+
+body.app-auth.model-user .app-main #changelist-filter,
+body.app-auth.model-group .app-main #changelist-filter,
+body.app-auth.model-user .app-main #changelist-search,
+body.app-auth.model-group .app-main #changelist-search {
+    color: var(--admin-ink) !important;
+}
+
+body.app-auth.model-user .app-main #changelist-filter a,
+body.app-auth.model-group .app-main #changelist-filter a {
+    color: #42677d !important;
+}
+
+body.app-auth.model-user .app-main #changelist-filter a:hover,
+body.app-auth.model-group .app-main #changelist-filter a:hover {
+    color: #213f52 !important;
+}
+/*
+body {
+    background: #eef3f8 !important;
+    color: #243447 !important;
+}
+
+.app-main {
+    background: #eef3f8 !important;
+}
+
+.app-sidebar {
+    background: #172b4d !important;
+    box-shadow: 4px 0 18px rgba(15, 23, 42, .14) !important;
+}
+
+.app-sidebar .nav-link,
+.app-sidebar .brand-link,
+.app-sidebar .nav-header {
+    color: #dbeafe !important;
+}
+
+.app-sidebar .nav-link:hover,
+.app-sidebar .nav-link.active {
+    background: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive,
+.app-main .ad-analytics-panel,
+.app-main .ad-analytics-card,
+.app-main .dashboard-section,
+.app-main .dashboard-kpi {
+    border: 1px solid #d7e1ec !important;
+    border-radius: 10px !important;
+    box-shadow: 0 7px 20px rgba(30, 64, 175, .08) !important;
+}
+
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive {
+    background: #ffffff !important;
+    color: #243447 !important;
+}
+
+.app-main h1,
+.app-main h2,
+.app-main h3,
+.app-main h4,
+.app-main h5,
+.app-main h6,
+.app-main .card-title {
+    color: #163b63 !important;
+}
+
+.app-main label,
+.app-main .form-row,
+.app-main .helptext,
+.app-main small {
+    color: #40546b !important;
+}
+
+.app-main input:not([type="checkbox"]):not([type="radio"]),
+.app-main textarea,
+.app-main select,
+.app-main .select2-selection {
+    background: #fbfdff !important;
+    color: #243447 !important;
+    border: 1px solid #afc0d2 !important;
+    border-radius: 7px !important;
+}
+
+.app-main input:focus,
+.app-main textarea:focus,
+.app-main select:focus,
+.app-main .select2-container--focus .select2-selection {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .14) !important;
+}
+
+.app-main .table,
+.app-main .results table,
+.app-main .ad-analytics-table,
+.app-main .dashboard-table {
+    color: #334155 !important;
+}
+
+.app-main .table th,
+.app-main .results th,
+.app-main .ad-analytics-table th,
+.app-main .dashboard-table th {
+    background: #e8f1fb !important;
+    color: #163b63 !important;
+    border-color: #d7e1ec !important;
+}
+
+.app-main .table td,
+.app-main .results td,
+.app-main .ad-analytics-table td,
+.app-main .dashboard-table td {
+    background: #ffffff !important;
+    color: #334155 !important;
+    border-color: #e1e8f0 !important;
+}
+
+.app-main .table tbody tr:hover td,
+.app-main .results tbody tr:hover td,
+.app-main .ad-analytics-table tbody tr:hover td,
+.app-main .dashboard-table tbody tr:hover td {
+    background: #f3f8ff !important;
+}
+
+.app-main .btn-primary,
+.app-main .submit-row .default,
+.app-main .object-tools a {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+.app-main .btn-success {
+    background: #059669 !important;
+    border-color: #059669 !important;
+    color: #ffffff !important;
+}
+
+.app-main a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: #2563eb !important;
+}
+
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi,
+.dashboard .dashboard-section .card {
+    background: #ffffff !important;
+    color: #243447 !important;
+}
+
+.dashboard .dashboard-section h2,
+.dashboard .dashboard-section .card-header {
+    color: #163b63 !important;
+    background: #e8f1fb !important;
+}
+
+.dashboard .dashboard-kpi strong {
+    color: #2563eb !important;
+}
+
+.model-advertisement .ad-analytics-card {
+    background: #ffffff !important;
+    color: #40546b !important;
+}
+
+.model-advertisement .ad-analytics-card strong,
+.model-advertisement .ad-analytics-panel h3 {
+    color: #163b63 !important;
+}
+
+.model-advertisement .ad-analytics-panel {
+    background: #ffffff !important;
+    color: #334155 !important;
+}
+
+.model-advertisement .ad-analytics-table th,
+.model-advertisement .ad-analytics-table td {
+    color: #334155 !important;
+    border-color: #dbe5f0 !important;
+}
+
+.model-advertisement .ad-analytics-table th {
+    background: #e8f1fb !important;
+    color: #163b63 !important;
+}
+
+*/
+
+/* Structural-only skeleton refinements. */
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.app-main .card-body,
+.app-main .module,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive {
+    padding: 1rem;
+}
+
+.app-main .form-row {
+    gap: .75rem;
+}
+
+.app-main .object-tools,
+.app-main .submit-row,
+.app-main .actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.app-main .table-responsive {
+    overflow-x: auto;
+}
+
+.app-main .table th,
+.app-main .table td,
+.app-main .results th,
+.app-main .results td {
+    vertical-align: middle;
+    white-space: normal;
+}
+
+.admin-3d-background {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    opacity: 0.15;
+    pointer-events: none;
+    user-select: none;
+}
+
+body > .wrapper,
+body > .content-wrapper,
+body > .main-sidebar,
+body > .main-header,
+#jazzy-content,
+#jazzy-navbar,
+#jazzy-sidebar {
+    position: relative;
+    z-index: 1;
+}
+
+#jazzy-content,
+.content-wrapper,
+.login-box,
+.login-card-body,
+.card,
+.module,
+.box,
+.results,
+.table-responsive {
+    transform: translateZ(0);
+    border-radius: var(--admin-3d-radius);
+    box-shadow: var(--admin-3d-shadow);
+}
+
+#jazzy-content,
+.content-wrapper,
+.login-card-body,
+.card,
+.module,
+.box {
+    background: #f8fbff !important;
+    color: var(--admin-text) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.34);
+}
+
+.card,
+.module,
+.box,
+.results,
+.table-responsive {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.card:hover,
+.module:hover,
+.box:hover {
+    transform: translateY(-3px) translateZ(0);
+    box-shadow: var(--admin-3d-shadow-hover);
+}
+
+.btn,
+.object-tools a,
+.submit-row input,
+.submit-row a,
+.actions button {
+    border-radius: 9px;
+    box-shadow: 0 5px 10px rgba(15, 23, 42, 0.18);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.btn:hover,
+.object-tools a:hover,
+.submit-row input:hover,
+.submit-row a:hover,
+.actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.22);
+}
+
+.btn:active,
+.object-tools a:active,
+.submit-row input:active,
+.submit-row a:active,
+.actions button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .module,
+    .box,
+    .btn,
+    .object-tools a,
+    .submit-row input,
+    .submit-row a,
+    .actions button {
+        transition: none;
+    }
+}
+
+/* Unified colorful admin theme. Presentation only; controls and features stay unchanged. */
+body {
+    background: #101827 !important;
+    color: #e5eefb !important;
+}
+
+.app-header,
+.main-header,
+#jazzy-navbar {
+    background: linear-gradient(90deg, #111827, #1e1b4b) !important;
+    border-bottom: 1px solid rgba(125, 211, 252, .25) !important;
+}
+
+.app-header a,
+.main-header a,
+#jazzy-navbar a,
+.app-header .nav-link,
+.main-header .nav-link {
+    color: #dbeafe !important;
+}
+
+.app-header a:hover,
+.main-header a:hover,
+#jazzy-navbar a:hover,
+.app-header .nav-link:hover,
+.main-header .nav-link:hover {
+    color: #67e8f9 !important;
+}
+
+.app-main .breadcrumb,
+.app-main .breadcrumb a {
+    color: #bfdbfe !important;
+}
+
+.app-main .alert {
+    border: 1px solid rgba(125, 211, 252, .28) !important;
+    border-radius: 9px !important;
+    box-shadow: 0 8px 18px rgba(2, 6, 23, .16) !important;
+}
+
+.app-footer,
+.main-footer {
+    background: #111827 !important;
+    border-top: 1px solid rgba(125, 211, 252, .2) !important;
+    color: #bfdbfe !important;
+}
+
+/* Reference dashboard palette: dark navy shell with vivid operational panels. */
+body,
+.app-wrapper,
+.app-main,
+.app-content,
+.content-wrapper {
+    background: #071426 !important;
+    color: #dbeafe !important;
+}
+
+.app-header,
+.main-header,
+#jazzy-navbar {
+    background: linear-gradient(90deg, #0b2f78, #075985 58%, #0e7490) !important;
+    border-bottom: 1px solid rgba(103, 232, 249, .35) !important;
+}
+
+.app-sidebar,
+#jazzy-sidebar {
+    background: linear-gradient(180deg, #06132a, #0b1d3a 60%, #111827) !important;
+    border-right: 1px solid rgba(59, 130, 246, .28) !important;
+}
+
+.app-sidebar .nav-link,
+.app-sidebar .brand-link,
+.app-sidebar .nav-header {
+    color: #bfdbfe !important;
+}
+
+.app-sidebar .nav-link:hover,
+.app-sidebar .nav-link.active {
+    background: linear-gradient(90deg, #075985, #0891b2) !important;
+    color: #ffffff !important;
+    box-shadow: inset 3px 0 #67e8f9;
+}
+
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive,
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi,
+.model-advertisement .ad-analytics-panel,
+.model-advertisement .ad-analytics-card {
+    background: rgba(13, 31, 61, .94) !important;
+    color: #dbeafe !important;
+    border: 1px solid rgba(96, 165, 250, .3) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .3) !important;
+}
+
+.app-main h1,
+.app-main h2,
+.app-main h3,
+.app-main h4,
+.app-main h5,
+.app-main h6,
+.dashboard .dashboard-section h2,
+.model-advertisement .ad-analytics-panel h3 {
+    color: #f8fafc !important;
+}
+
+.app-main label,
+.app-main .form-row,
+.app-main .helptext,
+.app-main small {
+    color: #93c5fd !important;
+}
+
+.app-main input:not([type="checkbox"]):not([type="radio"]),
+.app-main textarea,
+.app-main select,
+.app-main .select2-selection {
+    background: #0f213d !important;
+    color: #f8fafc !important;
+    border: 1px solid #41627f !important;
+    border-radius: 7px !important;
+}
+
+.app-main input:focus,
+.app-main textarea:focus,
+.app-main select:focus,
+.app-main .select2-container--focus .select2-selection {
+    border-color: #22d3ee !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, .2) !important;
+}
+
+.app-main .table,
+.app-main .results table,
+.app-main .ad-analytics-table,
+.app-main .dashboard-table {
+    color: #dbeafe !important;
+}
+
+.app-main .table th,
+.app-main .results th,
+.app-main .ad-analytics-table th,
+.app-main .dashboard-table th {
+    background: linear-gradient(90deg, #123b72, #164e63) !important;
+    color: #e0f2fe !important;
+    border-color: rgba(103, 232, 249, .25) !important;
+}
+
+.app-main .table td,
+.app-main .results td,
+.app-main .ad-analytics-table td,
+.app-main .dashboard-table td {
+    background: rgba(8, 23, 45, .82) !important;
+    color: #dbeafe !important;
+    border-color: rgba(96, 165, 250, .18) !important;
+}
+
+.app-main .table tbody tr:hover td,
+.app-main .results tbody tr:hover td,
+.app-main .ad-analytics-table tbody tr:hover td,
+.app-main .dashboard-table tbody tr:hover td {
+    background: rgba(14, 116, 144, .25) !important;
+}
+
+.app-main .btn-primary,
+.app-main .submit-row .default,
+.app-main .object-tools a {
+    background: linear-gradient(135deg, #2563eb, #0891b2) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+}
+
+.app-main .btn-success {
+    background: linear-gradient(135deg, #059669, #16a34a) !important;
+    border-color: #34d399 !important;
+    color: #ffffff !important;
+}
+
+.app-main .btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #ea580c) !important;
+    border-color: #fbbf24 !important;
+    color: #ffffff !important;
+}
+
+.app-main a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: #67e8f9 !important;
+}
+
+.dashboard .dashboard-kpi:nth-child(1) { background: linear-gradient(135deg, #075985, #0e7490) !important; }
+.dashboard .dashboard-kpi:nth-child(2) { background: linear-gradient(135deg, #047857, #16a34a) !important; }
+.dashboard .dashboard-kpi:nth-child(3) { background: linear-gradient(135deg, #2563eb, #4338ca) !important; }
+.dashboard .dashboard-kpi:nth-child(4) { background: linear-gradient(135deg, #c2410c, #f59e0b) !important; }
+
+.model-advertisement .ad-analytics-card:nth-child(1) { background: linear-gradient(135deg, #075985, #0e7490) !important; }
+.model-advertisement .ad-analytics-card:nth-child(2) { background: linear-gradient(135deg, #047857, #16a34a) !important; }
+.model-advertisement .ad-analytics-card:nth-child(3) { background: linear-gradient(135deg, #3730a3, #2563eb) !important; }
+.model-advertisement .ad-analytics-card:nth-child(4) { background: linear-gradient(135deg, #c2410c, #f59e0b) !important; }
+
+body.bg-body-tertiary,
+body.layout-fixed.bg-body-tertiary {
+    background: #071426 !important;
+}
+
+/* Ultra-dark SaaS admin finish. This final layer intentionally overrides older palettes. */
+:root {
+    --saas-bg: #09090b;
+    --saas-sidebar: #121215;
+    --saas-surface: #16161a;
+    --saas-surface-raised: #18181b;
+    --saas-border: #27272a;
+    --saas-text: #ffffff;
+    --saas-muted: #a1a1aa;
+    --saas-blue: #60a5fa;
+    --saas-purple: #a78bfa;
+    --saas-green: #22c55e;
+    --saas-gold: #f59e0b;
+}
+
+html,
+body,
+body.bg-body-tertiary,
+body.layout-fixed.bg-body-tertiary,
+.app-wrapper,
+.app-main,
+.app-content,
+.content-wrapper {
+    background: var(--saas-bg) !important;
+    color: var(--saas-text) !important;
+}
+
+.app-header,
+.main-header,
+#jazzy-navbar {
+    background: #121215 !important;
+    border-bottom: 1px solid var(--saas-border) !important;
+}
+
+.app-header a,
+.main-header a,
+#jazzy-navbar a,
+.app-header .nav-link,
+.main-header .nav-link {
+    color: var(--saas-muted) !important;
+}
+
+.app-header a:hover,
+.main-header a:hover,
+#jazzy-navbar a:hover,
+.app-header .nav-link:hover,
+.main-header .nav-link:hover {
+    color: var(--saas-text) !important;
+}
+
+.app-sidebar,
+#jazzy-sidebar {
+    background: var(--saas-sidebar) !important;
+    border-right: 1px solid var(--saas-border) !important;
+    box-shadow: none !important;
+}
+
+.app-sidebar .brand-link,
+.app-sidebar .nav-link,
+.app-sidebar .nav-header {
+    color: #d4d4d8 !important;
+}
+
+.app-sidebar .nav-link {
+    border-radius: 8px !important;
+    margin: 2px 10px !important;
+}
+
+.app-sidebar .nav-link:hover {
+    background: #27272a !important;
+    color: var(--saas-text) !important;
+}
+
+.app-sidebar .nav-link.active {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+.app-sidebar .nav-link.active p,
+.app-sidebar .nav-link.active i,
+.app-sidebar .nav-link.active .nav-icon {
+    color: #000000 !important;
+}
+
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive,
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi,
+.model-advertisement .ad-analytics-panel,
+.model-advertisement .ad-analytics-card {
+    background: var(--saas-surface) !important;
+    color: var(--saas-text) !important;
+    border: 1px solid var(--saas-border) !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.app-main h1,
+.app-main h2,
+.app-main h3,
+.app-main h4,
+.app-main h5,
+.app-main h6,
+.dashboard .dashboard-section h2,
+.model-advertisement .ad-analytics-panel h3 {
+    color: var(--saas-text) !important;
+    font-weight: 700;
+}
+
+.app-main label,
+.app-main .form-row,
+.app-main .helptext,
+.app-main small,
+.app-main .text-muted {
+    color: var(--saas-muted) !important;
+}
+
+.app-main input:not([type="checkbox"]):not([type="radio"]),
+.app-main textarea,
+.app-main select,
+.app-main .select2-selection {
+    background: var(--saas-surface-raised) !important;
+    color: var(--saas-text) !important;
+    border: 1px solid var(--saas-border) !important;
+    border-radius: 8px !important;
+}
+
+.app-main input:focus,
+.app-main textarea:focus,
+.app-main select:focus,
+.app-main .select2-container--focus .select2-selection {
+    border-color: var(--saas-blue) !important;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, .16) !important;
+}
+
+.app-main .table,
+.app-main .results table,
+.app-main .ad-analytics-table,
+.app-main .dashboard-table {
+    color: var(--saas-text) !important;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.app-main .table th,
+.app-main .results th,
+.app-main .ad-analytics-table th,
+.app-main .dashboard-table th {
+    background: var(--saas-surface-raised) !important;
+    color: var(--saas-muted) !important;
+    border-color: var(--saas-border) !important;
+    padding: 12px 16px !important;
+}
+
+.app-main .table td,
+.app-main .results td,
+.app-main .ad-analytics-table td,
+.app-main .dashboard-table td {
+    background: transparent !important;
+    color: #e4e4e7 !important;
+    border-color: var(--saas-border) !important;
+    padding: 12px 16px !important;
+}
+
+.app-main .table tbody tr:hover td,
+.app-main .results tbody tr:hover td,
+.app-main .ad-analytics-table tbody tr:hover td,
+.app-main .dashboard-table tbody tr:hover td {
+    background: #202024 !important;
+}
+
+.app-main a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: var(--saas-blue) !important;
+}
+
+.app-main .btn,
+.app-main .object-tools a,
+.app-main .submit-row input,
+.app-main .submit-row a,
+.app-main .actions button {
+    border-radius: 8px !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease !important;
+}
+
+.app-main .btn-primary,
+.app-main .submit-row .default,
+.app-main .object-tools a {
+    background: #ffffff !important;
+    border-color: #ffffff !important;
+    color: #000000 !important;
+}
+
+.app-main .btn-primary:hover,
+.app-main .submit-row .default:hover,
+.app-main .object-tools a:hover {
+    background: #d4d4d8 !important;
+    border-color: #d4d4d8 !important;
+}
+
+.app-main .btn-success {
+    background: var(--saas-green) !important;
+    border-color: var(--saas-green) !important;
+    color: #052e16 !important;
+}
+
+.app-main .btn-warning {
+    background: var(--saas-gold) !important;
+    border-color: var(--saas-gold) !important;
+    color: #1c1917 !important;
+}
+
+.app-main .btn-info {
+    background: transparent !important;
+    border-color: var(--saas-blue) !important;
+    color: var(--saas-blue) !important;
+}
+
+.app-main .alert {
+    background: var(--saas-surface-raised) !important;
+    border: 1px solid var(--saas-border) !important;
+    border-radius: 8px !important;
+    color: var(--saas-text) !important;
+    box-shadow: none !important;
+}
+
+.app-footer,
+.main-footer {
+    background: var(--saas-sidebar) !important;
+    border-top: 1px solid var(--saas-border) !important;
+    color: var(--saas-muted) !important;
+}
+
+.ui-customiser,
+.ui-customiser .control-sidebar-content {
+    background: var(--saas-sidebar) !important;
+    color: #d4d4d8 !important;
+    border-left: 1px solid var(--saas-border) !important;
+}
+
+/* Professional flat finish: remove 3D media, blur, transforms, and lift effects. */
+.admin-3d-background {
+    display: none !important;
+}
+
+body,
+.app-wrapper,
+.app-main,
+.app-content,
+.content-wrapper {
+    background: #101827 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive,
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi,
+.model-advertisement .ad-analytics-panel,
+.model-advertisement .ad-analytics-card {
+    transform: none !important;
+    transition: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-radius: 6px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .18) !important;
+}
+
+.app-main .card:hover,
+.app-main .module:hover,
+.app-main .box:hover,
+.app-main .btn:hover,
+.app-main .object-tools a:hover,
+.app-main .submit-row input:hover,
+.app-main .submit-row a:hover,
+.app-main .actions button:hover {
+    transform: none !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .18) !important;
+    filter: none !important;
+}
+
+.app-main .btn,
+.app-main .object-tools a,
+.app-main .submit-row input,
+.app-main .submit-row a,
+.app-main .actions button {
+    border-radius: 5px !important;
+    box-shadow: none !important;
+    transition: background-color .15s ease, border-color .15s ease !important;
+}
+
+.app-main .btn:active,
+.app-main .object-tools a:active,
+.app-main .submit-row input:active,
+.app-main .submit-row a:active,
+.app-main .actions button:active {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.login-page,
+.login-box,
+.login-card-body {
+    background: linear-gradient(135deg, #111827, #312e81) !important;
+    color: #e0f2fe !important;
+}
+
+.ui-customiser,
+.ui-customiser .control-sidebar-content {
+    background: #111827 !important;
+    color: #dbeafe !important;
+    border-left: 1px solid rgba(125, 211, 252, .24) !important;
+}
+
+.app-main {
+    background: linear-gradient(135deg, #101827, #172554) !important;
+}
+
+.app-sidebar {
+    background: linear-gradient(180deg, #111827, #1e1b4b) !important;
+    border-right: 1px solid rgba(129, 140, 248, .28);
+}
+
+.app-sidebar .brand-link,
+.app-sidebar .nav-link,
+.app-sidebar .nav-header {
+    color: #dbeafe !important;
+}
+
+.app-sidebar .nav-link:hover,
+.app-sidebar .nav-link.active {
+    background: linear-gradient(90deg, #2563eb, #7c3aed) !important;
+    color: #ffffff !important;
+}
+
+.app-main .card,
+.app-main .module,
+.app-main .box,
+.app-main fieldset,
+.app-main .results,
+.app-main .table-responsive {
+    background: rgba(20, 30, 55, .94) !important;
+    color: #e5eefb !important;
+    border: 1px solid rgba(129, 140, 248, .32) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 12px 28px rgba(2, 6, 23, .28) !important;
+}
+
+.app-main h1,
+.app-main h2,
+.app-main h3,
+.app-main h4,
+.app-main h5,
+.app-main h6,
+.app-main .card-title {
+    color: #f8fafc !important;
+}
+
+.app-main label,
+.app-main .form-row,
+.app-main .helptext,
+.app-main small {
+    color: #bfdbfe !important;
+}
+
+.app-main input:not([type="checkbox"]):not([type="radio"]),
+.app-main textarea,
+.app-main select,
+.app-main .select2-selection {
+    background: #172033 !important;
+    color: #f8fafc !important;
+    border: 1px solid #64748b !important;
+    border-radius: 8px !important;
+}
+
+.app-main input:focus,
+.app-main textarea:focus,
+.app-main select:focus,
+.app-main .select2-container--focus .select2-selection {
+    border-color: #22d3ee !important;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, .2) !important;
+}
+
+.app-main .table,
+.app-main .results table,
+.app-main .ad-analytics-table,
+.app-main .dashboard-table {
+    color: #dbeafe !important;
+}
+
+.app-main .table th,
+.app-main .results th,
+.app-main .ad-analytics-table th,
+.app-main .dashboard-table th {
+    background: linear-gradient(90deg, #1e3a8a, #312e81) !important;
+    color: #e0f2fe !important;
+    border-color: rgba(125, 211, 252, .24) !important;
+}
+
+.app-main .table td,
+.app-main .results td,
+.app-main .ad-analytics-table td,
+.app-main .dashboard-table td {
+    background: rgba(15, 23, 42, .72) !important;
+    color: #dbeafe !important;
+    border-color: rgba(148, 163, 184, .2) !important;
+}
+
+.app-main .table tbody tr:hover td,
+.app-main .results tbody tr:hover td,
+.app-main .ad-analytics-table tbody tr:hover td,
+.app-main .dashboard-table tbody tr:hover td {
+    background: rgba(37, 99, 235, .2) !important;
+}
+
+.app-main .btn-primary,
+.app-main .submit-row .default,
+.app-main .object-tools a {
+    background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+    border-color: #6366f1 !important;
+    color: #ffffff !important;
+}
+
+.app-main .btn-success {
+    background: linear-gradient(135deg, #059669, #14b8a6) !important;
+    border-color: #10b981 !important;
+    color: #ffffff !important;
+}
+
+.app-main a:not(.btn):not(.nav-link):not(.dropdown-item) {
+    color: #67e8f9 !important;
+}
+
+.dashboard .dashboard-section,
+.dashboard .dashboard-kpi,
+.dashboard .dashboard-section .card,
+.model-advertisement .ad-analytics-panel,
+.model-advertisement .ad-analytics-card {
+    background: linear-gradient(145deg, #111c36, #172554) !important;
+    color: #e0f2fe !important;
+    border-color: rgba(125, 211, 252, .3) !important;
+}
+
+.dashboard .dashboard-section h2,
+.dashboard .dashboard-section .card-header,
+.model-advertisement .ad-analytics-panel h3,
+.model-advertisement .ad-analytics-card strong {
+    color: #f8fafc !important;
+}
+
+.model-advertisement #result_list,
+.model-advertisement #result_list tbody,
+.model-advertisement #result_list tr,
+.model-advertisement #result_list td {
+    background: rgba(15, 23, 42, .84) !important;
+    color: #dbeafe !important;
+    border-color: rgba(125, 211, 252, .22) !important;
+}
+
+.model-advertisement #result_list thead th {
+    background: linear-gradient(90deg, #1e3a8a, #312e81) !important;
+    color: #e0f2fe !important;
+}
+
+.model-advertisement #result_list tbody tr:hover td {
+    background: rgba(37, 99, 235, .22) !important;
+}
+
+/* Runtime theme values supplied by admin_3d.js. */
+body:has(.admin-3d-background) .content-wrapper,
+body:has(.admin-3d-background) .app-main,
+body:has(.admin-3d-background) .app-main > .container-fluid {
+    background: color-mix(in srgb, var(--admin-workspace) 88%, transparent) !important;
+}
+
+body:has(.admin-3d-background) .main-sidebar,
+body:has(.admin-3d-background) .app-sidebar {
+    background: var(--admin-charcoal) !important;
+}
+
+body:has(.admin-3d-background) .content-wrapper .card,
+body:has(.admin-3d-background) .content-wrapper .module,
+body:has(.admin-3d-background) .content-wrapper fieldset,
+body:has(.admin-3d-background) .content-wrapper .results,
+body:has(.admin-3d-background) .content-wrapper .table-responsive {
+    background: rgba(255, 255, 255, 0.96) !important;
+}
+
+.admin-3d-background {
+    background: #20252d;
+    object-fit: cover;
+    opacity: 0.18;
+}
+
+.main-sidebar .nav-link .nav-icon,
+.app-sidebar .nav-link .nav-icon,
+.main-sidebar .nav-link i,
+.app-sidebar .nav-link i {
+    width: 1.25rem;
+    text-align: center;
+    transition: color 160ms ease, transform 160ms ease;
+}
+
+.main-sidebar .nav-link:hover .nav-icon,
+.app-sidebar .nav-link:hover .nav-icon,
+.main-sidebar .nav-link:hover i,
+.app-sidebar .nav-link:hover i {
+    color: var(--admin-pastel-blue) !important;
+    transform: scale(1.08);
+}
+
+/* Auth management pages: dense, readable cards for Users and Groups. */
+body.app-auth.model-user,
+body.app-auth.model-group {
+    background: var(--admin-workspace) !important;
+}
+
+body.app-auth.model-user .main-sidebar,
+body.app-auth.model-user .app-sidebar,
+body.app-auth.model-group .main-sidebar,
+body.app-auth.model-group .app-sidebar {
+    background: var(--admin-charcoal) !important;
+}
+
+body.app-auth.model-user .content-wrapper,
+body.app-auth.model-group .content-wrapper {
+    background: var(--admin-workspace) !important;
+}
+
+body.app-auth.model-user .content-header,
+body.app-auth.model-group .content-header {
+    padding-bottom: 0.8rem;
+}
+
+body.app-auth.model-user .content-header h1,
+body.app-auth.model-group .content-header h1 {
+    font-size: 1.65rem !important;
+    letter-spacing: -0.01em;
+}
+
+body.app-auth.model-user .app-main > .container-fluid,
+body.app-auth.model-group .app-main > .container-fluid {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+}
+
+body.app-auth.model-user .app-main .card,
+body.app-auth.model-user .app-main .module,
+body.app-auth.model-user .app-main .results,
+body.app-auth.model-user .app-main .table-responsive,
+body.app-auth.model-group .app-main .card,
+body.app-auth.model-group .app-main .module,
+body.app-auth.model-group .app-main .results,
+body.app-auth.model-group .app-main .table-responsive {
+    background: var(--admin-surface) !important;
+    border: 1px solid var(--admin-line) !important;
+    border-radius: 14px !important;
+    box-shadow: var(--admin-shadow) !important;
+    overflow: hidden;
+}
+
+body.app-auth.model-user .app-main .results,
+body.app-auth.model-group .app-main .results {
+    margin-top: 0.75rem;
+}
+
+body.app-auth.model-user .app-main #changelist-filter,
+body.app-auth.model-group .app-main #changelist-filter {
+    background: #fcfdfe !important;
+    border: 1px solid var(--admin-line) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--admin-shadow) !important;
+    padding: 0.85rem !important;
+}
+
+body.app-auth.model-user .app-main #changelist-filter h2,
+body.app-auth.model-group .app-main #changelist-filter h2 {
+    background: #f1f4f7 !important;
+    border-radius: 8px !important;
+    color: var(--admin-ink) !important;
+    font-size: 0.78rem !important;
+    letter-spacing: 0.08em;
+    padding: 0.7rem 0.8rem !important;
+    text-transform: uppercase;
+}
+
+body.app-auth.model-user .app-main #changelist-filter li,
+body.app-auth.model-group .app-main #changelist-filter li {
+    border-radius: 7px;
+    margin: 0.2rem 0;
+    padding: 0.25rem 0.5rem;
+    transition: background-color 160ms ease;
+}
+
+body.app-auth.model-user .app-main #changelist-filter li:hover,
+body.app-auth.model-group .app-main #changelist-filter li:hover {
+    background: var(--admin-pastel-blue) !important;
+}
+
+body.app-auth.model-user .app-main #changelist-search,
+body.app-auth.model-group .app-main #changelist-search {
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--admin-line);
+    border-radius: 12px;
+    box-shadow: var(--admin-shadow);
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+}
+
+body.app-auth.model-user .app-main #changelist-search input,
+body.app-auth.model-group .app-main #changelist-search input {
+    margin: 0 !important;
+}
+
+body.app-auth.model-user .app-main #result_list,
+body.app-auth.model-group .app-main #result_list {
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100%;
+}
+
+body.app-auth.model-user .app-main #result_list thead th,
+body.app-auth.model-group .app-main #result_list thead th {
+    background: #eef2f5 !important;
+    border-bottom: 1px solid #d9e0e7 !important;
+    color: #485665 !important;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    padding: 0.9rem 0.85rem !important;
+    text-transform: uppercase;
+}
+
+body.app-auth.model-user .app-main #result_list tbody td,
+body.app-auth.model-group .app-main #result_list tbody td {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--admin-line) !important;
+    color: var(--admin-ink) !important;
+    padding: 0.85rem !important;
+    vertical-align: middle;
+}
+
+body.app-auth.model-user .app-main #result_list tbody tr:last-child td,
+body.app-auth.model-group .app-main #result_list tbody tr:last-child td {
+    border-bottom: 0 !important;
+}
+
+body.app-auth.model-user .app-main #result_list tbody tr:hover td,
+body.app-auth.model-group .app-main #result_list tbody tr:hover td {
+    background: #f8fbfd !important;
+}
+
+body.app-auth.model-user .app-main #result_list a,
+body.app-auth.model-group .app-main #result_list a {
+    color: #416783 !important;
+    font-weight: 600;
+    transition: color 160ms ease;
+}
+
+body.app-auth.model-user .app-main #result_list a:hover,
+body.app-auth.model-group .app-main #result_list a:hover {
+    color: #1f526f !important;
+}
+
+body.app-auth.model-user .app-main .actions,
+body.app-auth.model-group .app-main .actions,
+body.app-auth.model-user .app-main .paginator,
+body.app-auth.model-group .app-main .paginator {
+    background: #ffffff !important;
+    border: 1px solid var(--admin-line) !important;
+    color: var(--admin-muted) !important;
+    margin-top: 0.75rem;
+    padding: 0.7rem !important;
+}
+
+body.app-auth.model-user .app-main .actions select,
+body.app-auth.model-group .app-main .actions select,
+body.app-auth.model-user .app-main .actions button,
+body.app-auth.model-group .app-main .actions button,
+body.app-auth.model-user .app-main .paginator a,
+body.app-auth.model-group .app-main .paginator a {
+    border-radius: 8px !important;
+}
+
+@media (max-width: 767.98px) {
+    body.app-auth.model-user .app-main > .container-fluid,
+    body.app-auth.model-group .app-main > .container-fluid {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    body.app-auth.model-user .app-main #changelist-search,
+    body.app-auth.model-group .app-main #changelist-search {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}

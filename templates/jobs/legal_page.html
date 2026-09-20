@@ -1,0 +1,16 @@
+{% extends 'jobs/base.html' %}
+{% load i18n security_tags %}
+
+{% block content %}
+<article class="card shadow-sm border-0 legal-page">
+    <div class="card-body p-4 p-lg-5" style="color: {{ page.text_color }}; font-size: {{ page.font_size }}px;">
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-4">
+            <h1 class="h2 mb-0">{{ page.title }}</h1>
+            <a href="{% url 'job_list' %}" class="btn btn-outline-secondary btn-sm text-nowrap" aria-label="Close and return to jobs">
+                <i class="fa-solid fa-xmark me-1"></i> {% translate "Close" %}
+            </a>
+        </div>
+        <div class="legal-content">{{ page.content|sanitize_html }}</div>
+    </div>
+</article>
+{% endblock %}

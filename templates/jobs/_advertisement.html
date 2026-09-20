@@ -1,0 +1,21 @@
+{% load security_tags %}
+<div class="ad-container ad-text-{{ ad.text_placement }} mb-4{% if ad.effective_format == 'full_page' %} full-page-ad{% endif %}"
+     style="--ad-text-color: {{ ad.text_color }}; --ad-text-size: {{ ad.text_size }}px;">
+    <img src="{% url 'advertisement_impression' ad.id %}" width="1" height="1" alt="" aria-hidden="true">
+    <div class="ad-content">
+        <div class="ad-text ad-text-primary{% if not ad.ad_text %} d-none{% endif %}">{{ ad.ad_text|sanitize_html }}</div>
+        <div class="ad-media{% if ad.size_mode == 'manual' %} ad-media-manual{% endif %}"{% if ad.size_mode == 'manual' %} style="--ad-width: {% if ad.image_width %}{{ ad.image_width }}px{% else %}auto{% endif %}; --ad-height: {% if ad.image_height %}{{ ad.image_height }}px{% else %}auto{% endif %};"{% endif %}>
+            {% if ad.effective_format == 'video' and ad.video_url %}
+                <video class="img-fluid rounded" controls playsinline preload="metadata">
+                    <source src="{{ ad.video_url }}">
+                </video>
+            {% elif ad.effective_format == 'html' and ad.adsense_code %}
+                {{ ad.adsense_code|safe }}
+            {% elif ad.banner_image %}
+                <a href="{% url 'advertisement_click' ad.id %}" target="_blank" rel="noopener noreferrer">
+                    <img src="{{ ad.banner_image.url }}" class="img-fluid rounded" alt="{{ ad.title }}">
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>

@@ -1,0 +1,46 @@
+{% extends 'jobs/base.html' %}
+{% load i18n security_tags %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <p class="text-uppercase small text-info mb-1" style="letter-spacing: 0.12em;">{% translate "Explore" %}</p>
+            <h1 class="mb-0 text-white">{% translate "Job Categories" %}</h1>
+        </div>
+        <a href="{% url 'job_list' %}" class="btn btn-outline-light">{% translate "Back to jobs" %}</a>
+    </div>
+
+    <div class="row g-4">
+        {% for category in categories %}
+        <div class="col-sm-6 col-lg-4">
+            <div class="card job-card h-100 border-0 rounded-4 overflow-hidden">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">
+                            <i class="fa-solid fa-briefcase me-2"></i>{% translate "Category" %}
+                        </span>
+                        <i class="fa-solid fa-arrow-right text-info"></i>
+                    </div>
+
+                    <h2 class="h4 text-white mb-3">{{ category.name }}</h2>
+                    <div class="text-light-emphasis mb-4">
+                        {{ category.description|default:'<p>Browse relevant job opportunities and career openings in this category.</p>'|sanitize_html|truncatechars:150 }}
+                    </div>
+
+                    <a href="{% url 'job_list' %}?category={{ category.slug|default:category.name|urlencode }}" class="btn btn-primary">
+                        {% translate "Browse jobs" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card job-card rounded-4 border-0 p-4 text-center">
+                <p class="mb-0 text-light-emphasis">{% translate "No categories available yet." %}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

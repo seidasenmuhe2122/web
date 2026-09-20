@@ -1,0 +1,23 @@
+{% extends 'admin/base_site.html' %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+    <div class="module aligned">
+        <p><strong>{% trans 'Reply from:' %}</strong> {{ DEFAULT_FROM_EMAIL|default:'afrijobethiopia@gmail.com' }}</p>
+        <p><strong>{% trans 'From:' %}</strong> {{ original.name }} &lt;{{ original.email }}&gt;</p>
+        <p><strong>{% trans 'Original subject:' %}</strong> {{ original.subject }}</p>
+        <p><strong>{% trans 'Message:' %}</strong></p>
+        <blockquote>{{ original.message|linebreaksbr }}</blockquote>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="submit-row">
+            <input type="submit" value="{% trans 'Send reply' %}" class="default">
+            <a href="{% url 'admin:jobs_contactmessage_changelist' %}" class="button cancel-link">{% trans 'Cancel' %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+#
+msgid ""
+msgstr ""
+"Language: ar\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "About"
+msgstr "من نحن"
+
+msgid "Contact"
+msgstr "اتصل بنا"
+
+msgid "Privacy Policy"
+msgstr "سياسة الخصوصية"
+
+msgid "Terms and Conditions"
+msgstr "الشروط والأحكام"
+
+msgid "Close"
+msgstr "إغلاق"
+
+msgid "Send us a message"
+msgstr "أرسل لنا رسالة"
+
+msgid "Send message"
+msgstr "إرسال الرسالة"
+
+msgid "Premium hiring platform"
+msgstr "منصة توظيف متميزة"
+
+msgid "Find your next opportunity"
+msgstr "اعثر على فرصتك القادمة"
+
+msgid ""
+"Discover top jobs, connect with employers, and grow your career with a "
+"smarter job search experience."
+msgstr "اكتشف أفضل الوظائف وتواصل مع أصحاب العمل وطوّر مسيرتك المهنية."
+
+msgid "Active Jobs"
+msgstr "الوظائف النشطة"
+
+msgid "Employers"
+msgstr "أصحاب العمل"
+
+msgid "Search"
+msgstr "بحث"
+
+msgid "Location"
+msgstr "الموقع"
+
+msgid "Job Type"
+msgstr "نوع الوظيفة"
+
+msgid "Experience"
+msgstr "الخبرة"
+
+msgid "All"
+msgstr "الكل"
+
+msgid "Featured"
+msgstr "مميز"
+
+msgid "Urgent"
+msgstr "عاجل"
+
+msgid "Negotiable"
+msgstr "قابل للتفاوض"
+
+msgid "View Details"
+msgstr "عرض التفاصيل"
+
+msgid "vacancies"
+msgstr "شواغر"
+
+msgid "views"
+msgstr "مشاهدات"
+
+msgid "Deadline"
+msgstr "الموعد النهائي"
+
+msgid "No jobs found."
+msgstr "لم يتم العثور على وظائف."
+
+msgid "Please add a new job from the Admin Dashboard."
+msgstr "يرجى إضافة وظيفة جديدة من لوحة الإدارة."
+
+msgid "Featured Jobs"
+msgstr "وظائف مميزة"
+
+msgid "Career Platform"
+msgstr "منصة مهنية"
+
+msgid "Browse Jobs"
+msgstr "تصفح الوظائف"
+
+msgid "View Categories"
+msgstr "عرض الفئات"
+
+msgid "Live"
+msgstr "مباشر"
+
+msgid "Popular"
+msgstr "شائع"
+
+msgid "Featured Job Categories"
+msgstr "فئات الوظائف المميزة"
+
+msgid "See all categories"
+msgstr "عرض كل الفئات"
+
+msgid "Explore jobs"
+msgstr "استكشف الوظائف"
+
+msgid "Open roles"
+msgstr "الوظائف الشاغرة"
+
+msgid "Latest Jobs"
+msgstr "أحدث الوظائف"
+
+msgid "Browse all jobs"
+msgstr "تصفح كل الوظائف"
+
+msgid "View job"
+msgstr "عرض الوظيفة"
+
+msgid "No job openings available yet."
+msgstr "لا توجد وظائف شاغرة حتى الآن."
+
+msgid "Recent Blog Posts"
+msgstr "أحدث منشورات المدونة"
+
+msgid "Read all posts"
+msgstr "قراءة كل المنشورات"
+
+msgid "Read article"
+msgstr "قراءة المقال"
+
+msgid "Close and return to jobs"
+msgstr "إغلاق والعودة إلى الوظائف"
+
+msgid "Kombolcha, Ethiopia"
+msgstr "كومبولتشا، إثيوبيا"
+
+msgid "Your name"
+msgstr "اسمك"
+
+msgid "How can we help?"
+msgstr "كيف يمكننا مساعدتك؟"
+
+msgid "Write your message here..."
+msgstr "اكتب رسالتك هنا..."

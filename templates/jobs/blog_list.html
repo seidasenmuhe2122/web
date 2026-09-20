@@ -1,0 +1,48 @@
+{% extends 'jobs/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <p class="text-uppercase small text-info mb-1" style="letter-spacing: 0.12em;">{% translate "Insights" %}</p>
+            <h1 class="mb-0 text-white">{% translate "Blog" %}</h1>
+        </div>
+        <a href="{% url 'home' %}" class="btn btn-outline-light">{% translate "Back home" %}</a>
+    </div>
+
+    <div class="row g-4">
+        {% for post in posts %}
+        <div class="col-lg-6">
+            <article class="card job-card h-100 border-0 rounded-4 overflow-hidden">
+                {% if post.cover_image %}
+                    <img src="{{ post.cover_image.url }}" class="blog-cover-image" alt="{{ post.title }}" loading="lazy">
+                {% endif %}
+                <div class="card-body p-4 d-flex flex-column h-100">
+                    <div class="d-flex justify-content-between align-items-center small text-light-emphasis mb-3">
+                        <span><i class="fa-regular fa-calendar me-2"></i>{{ post.created_at|date:"M d, Y" }}</span>
+                        <span class="badge rounded-pill bg-secondary-subtle text-white">Blog</span>
+                    </div>
+
+                    <h2 class="h3 text-white mb-3">{{ post.title }}</h2>
+                    <div class="text-light-emphasis mb-4 flex-grow-1">
+                        {{ post.excerpt|default:post.content|striptags|truncatechars:220 }}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <a href="{% url 'blog_detail' post.slug %}" class="btn btn-primary">{% translate "Read article" %}</a>
+                        <small class="text-light-emphasis">{{ post.updated_at|date:"M d, Y" }}</small>
+                    </div>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card job-card rounded-4 border-0 p-4 text-center">
+                <p class="mb-0 text-light-emphasis">{% translate "No blog posts published yet." %}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

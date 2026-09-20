@@ -1,0 +1,179 @@
+{% extends 'jobs/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container py-4">
+    <section class="hero-3d mb-5 position-relative">
+        <div class="floating-cube"></div>
+        <div class="floating-orb"></div>
+        <div class="floating-ring"></div>
+        <div class="row align-items-center g-4 position-relative" style="z-index: 1;">
+            <div class="col-lg-7">
+                <span class="badge rounded-pill px-3 py-2 mb-3" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: var(--text); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.7rem;">
+                    {% translate "Career Platform" %}
+                </span>
+                <h1 class="display-5 fw-bold mb-3" style="line-height: 1.15;">
+                    {% if site_settings and site_settings.hero_title %}
+                        {{ site_settings.hero_title }}
+                    {% else %}
+                        {% translate "Your next career move starts here." %}
+                    {% endif %}
+                </h1>
+                <p class="lead text-light-emphasis mb-4">
+                    {% if site_settings and site_settings.hero_description %}
+                        {{ site_settings.hero_description }}
+                    {% else %}
+                        {% translate "Explore fresh opportunities, discover categories that match your skills, and read useful insights from the latest job market updates." %}
+                    {% endif %}
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{% url 'job_list' %}" class="btn btn-primary btn-lg px-4">{% translate "Browse Jobs" %}</a>
+                    <a href="{% url 'category_list' %}" class="btn btn-outline-light btn-lg px-4">{% translate "View Categories" %}</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="glass-panel rounded-4 p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-uppercase small text-light-emphasis">{% translate "Featured" %}</span>
+                        <span class="badge bg-success-subtle text-success">{% translate "Live" %}</span>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for category in featured_categories|default:categories|slice:':4' %}
+                        <div class="list-group-item bg-transparent border-0 px-0 py-2 text-white-50">
+                            <div class="d-flex align-items-center justify-content-between gap-3">
+                                <div>
+                                    <div class="fw-semibold text-white">{{ category.name }}</div>
+                                    <small>{{ category.description|default:_('Career opportunities and hiring updates')|striptags|truncatechars:55 }}</small>
+                                </div>
+                                <i class="fa-solid fa-arrow-right text-info"></i>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item bg-transparent border-0 px-0 py-2 text-white-50">
+                            <div class="fw-semibold text-white">{% translate "No categories available yet." %}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <p class="text-uppercase small text-info mb-1" style="letter-spacing: 0.12em;">{% translate "Popular" %}</p>
+                <h2 class="mb-0 text-white">{% translate "Featured Job Categories" %}</h2>
+            </div>
+            <a href="{% url 'category_list' %}" class="btn btn-outline-light">{% translate "See all categories" %}</a>
+        </div>
+
+        <div class="row g-4">
+            {% for category in featured_categories|default:categories|slice:':6' %}
+            <div class="col-md-6 col-xl-4">
+                <div class="card job-card h-100 border-0 rounded-4 overflow-hidden">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge rounded-pill bg-primary-subtle text-primary px-3 py-2">
+                                <i class="fa-solid fa-briefcase me-2"></i>{% translate "Category" %}
+                            </span>
+                            <i class="fa-solid fa-circle-arrow-right text-info"></i>
+                        </div>
+                        <h3 class="h4 mb-2 text-white">{{ category.name }}</h3>
+                        <p class="text-light-emphasis mb-3">
+                            {{ category.description|default:_('Explore jobs in this category and discover the best opportunities for your career path.')|striptags|truncatechars:130 }}
+                        </p>
+                        <a href="{% url 'job_list' %}?category={{ category.slug|default:category.name|urlencode }}" class="btn btn-sm btn-outline-light">
+                            {% translate "Explore jobs" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card job-card rounded-4 border-0 p-4 text-center">
+                    <p class="mb-0 text-light-emphasis">{% translate "No categories available yet." %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <p class="text-uppercase small text-info mb-1" style="letter-spacing: 0.12em;">{% translate "Open roles" %}</p>
+                <h2 class="mb-0 text-white">{% translate "Latest Jobs" %}</h2>
+            </div>
+            <a href="{% url 'job_list' %}" class="btn btn-outline-light">{% translate "Browse all jobs" %}</a>
+        </div>
+
+        <div class="row g-4">
+            {% for job in jobs %}
+            <div class="col-md-6 col-xl-4">
+                <article class="card job-card h-100 border-0 rounded-4 overflow-hidden">
+                    <div class="card-body p-4 d-flex flex-column h-100">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">{{ job.job_type }}</span>
+                            <small class="text-light-emphasis">{{ job.location }}</small>
+                        </div>
+                        <h3 class="h5 text-white mb-2">{{ job.title }}</h3>
+                        <p class="text-light-emphasis mb-3">{{ job.company_name }}</p>
+                        <p class="text-light-emphasis mb-4 flex-grow-1">
+                            {{ job.translated_description|striptags|truncatechars:140 }}
+                        </p>
+                        <a href="{% url 'job_detail' job.id %}" class="btn btn-sm btn-primary mt-auto align-self-start">
+                            {% translate "View job" %}
+                        </a>
+                    </div>
+                </article>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card job-card rounded-4 border-0 p-4 text-center">
+                    <p class="mb-0 text-light-emphasis">{% translate "No job openings available yet." %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <div>
+                <p class="text-uppercase small text-info mb-1" style="letter-spacing: 0.12em;">{% translate "Insights" %}</p>
+                <h2 class="mb-0 text-white">{% translate "Recent Blog Posts" %}</h2>
+            </div>
+            <a href="{% url 'blog_list' %}" class="btn btn-outline-light">{% translate "Read all posts" %}</a>
+        </div>
+
+        <div class="row g-4">
+            {% for post in recent_posts|default:posts|slice:':3' %}
+            <div class="col-md-6 col-xl-4">
+                <article class="card job-card h-100 border-0 rounded-4 overflow-hidden">
+                    <div class="card-body p-4 d-flex flex-column h-100">
+                        <div class="d-flex justify-content-between align-items-center text-light-emphasis small mb-3">
+                            <span><i class="fa-regular fa-calendar me-2"></i>{{ post.created_at|date:"M d, Y" }}</span>
+                            <span class="badge rounded-pill bg-secondary-subtle text-white">{% translate "Blog" %}</span>
+                        </div>
+                        <h3 class="h5 text-white mb-3">{{ post.title }}</h3>
+                        <p class="text-light-emphasis mb-4 flex-grow-1">
+                            {{ post.content|striptags|truncatechars:150 }}
+                        </p>
+                        <a href="{% url 'blog_detail' post.slug %}" class="btn btn-sm btn-primary mt-auto align-self-start">
+                            {% translate "Read article" %}
+                        </a>
+                    </div>
+                </article>
+            </div>
+            {% empty %}
+            <div class="col-12">
+                <div class="card job-card rounded-4 border-0 p-4 text-center">
+                    <p class="mb-0 text-light-emphasis">{% translate "No blog posts published yet." %}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

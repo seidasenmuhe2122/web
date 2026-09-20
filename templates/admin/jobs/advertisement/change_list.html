@@ -1,0 +1,92 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    {% if analytics_summary %}
+        <style>
+            .ad-analytics { width: 100%; max-width: none; margin: 0 0 18px; color: #e8f1ff; font-size: .82rem; overflow: visible; box-sizing: border-box; }
+            .ad-analytics-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; width: 100%; }
+            .ad-analytics-card { background: linear-gradient(135deg, #102a43, #164e63); border: 1px solid rgba(125, 211, 252, .28); border-radius: 11px; padding: 12px 14px; box-shadow: 0 8px 18px rgba(15, 23, 42, .22); color: #ccecff; line-height: 1.2; min-width: 0; max-width: none; box-sizing: border-box; }
+            .ad-analytics-card:nth-child(2) { background: linear-gradient(135deg, #123b35, #087f5b); }
+            .ad-analytics-card:nth-child(3) { background: linear-gradient(135deg, #312e81, #4338ca); }
+            .ad-analytics-card:nth-child(4) { background: linear-gradient(135deg, #713f12, #b45309); }
+            .ad-analytics-card strong { display: block; color: #fff; font-size: 1.35rem; margin-top: 4px; }
+            .ad-analytics-charts { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 12px; margin-bottom: 12px; width: 100%; }
+            .ad-analytics-panel { background: linear-gradient(145deg, #0f172a, #172554); border: 1px solid rgba(148, 163, 184, .24); border-radius: 11px; padding: 13px; overflow: hidden; box-shadow: 0 10px 22px rgba(15, 23, 42, .18); min-width: 0; max-width: none; box-sizing: border-box; }
+            .ad-analytics-panel h3 { margin: 0 0 9px; color: #f8fbff; font-size: .95rem; }
+            .ad-chart { min-height: 190px; display: flex; align-items: end; gap: 7px; padding: 10px 5px 22px; border-bottom: 1px solid rgba(148, 163, 184, .24); }
+            .ad-chart-column { flex: 1; min-width: 34px; text-align: center; }
+            .ad-chart-bars { height: 135px; display: flex; align-items: end; justify-content: center; gap: 3px; }
+            .ad-chart-bar { width: 11px; min-height: 2px; border-radius: 3px 3px 0 0; }
+            .ad-chart-bar.views { background: linear-gradient(180deg, #67e8f9, #0891b2); box-shadow: 0 0 12px rgba(34, 211, 238, .3); }
+            .ad-chart-bar.clicks { background: linear-gradient(180deg, #fcd34d, #f59e0b); box-shadow: 0 0 12px rgba(251, 191, 36, .3); }
+            .ad-chart-label { display: block; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .68rem; margin-top: 4px; }
+            .ad-analytics-table { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: .78rem; }
+            .ad-analytics-table th, .ad-analytics-table td { padding: 7px 6px; border-bottom: 1px solid rgba(148, 163, 184, .2); color: #dbeafe; text-align: left; }
+            .ad-analytics-table th { color: #7dd3fc; font-weight: 700; }
+            .ad-analytics-table tbody tr:hover { background: rgba(56, 189, 248, .08); }
+            .ad-analytics-panel p strong { color: #67e8f9; }
+            .ad-analytics-panel small { color: #cbd5e1; }
+            @media (max-width: 900px) { .ad-analytics-grid, .ad-analytics-charts { grid-template-columns: 1fr 1fr; } }
+            @media (max-width: 600px) { .ad-analytics-grid, .ad-analytics-charts { grid-template-columns: 1fr; } }
+        </style>
+
+        <section class="ad-analytics" aria-label="Advertisement analytics">
+            <div class="ad-analytics-grid">
+                <div class="ad-analytics-card">Advertisements<strong>{{ analytics_summary.advertisements }}</strong></div>
+                <div class="ad-analytics-card">Active<strong>{{ analytics_summary.active }}</strong></div>
+                <div class="ad-analytics-card">Total views<strong>{{ analytics_summary.views }}</strong></div>
+                <div class="ad-analytics-card">Total clicks<strong>{{ analytics_summary.clicks }}</strong></div>
+            </div>
+
+            <div class="ad-analytics-charts">
+                <div class="ad-analytics-panel">
+                    <h3>Views and clicks by advertisement</h3>
+                    {% with max_value=analytics_summary.views %}
+                        <div class="ad-chart">
+                            {% for ad in analytics_summary.advertisements_data %}
+                                <div class="ad-chart-column" title="{{ ad.label }}: {{ ad.views }} views, {{ ad.clicks }} clicks">
+                                    <div class="ad-chart-bars">
+                                        <span class="ad-chart-bar views" style="height: {% widthratio ad.views max_value 100 %}%;" aria-label="{{ ad.views }} views"></span>
+                                        <span class="ad-chart-bar clicks" style="height: {% widthratio ad.clicks max_value 100 %}%;" aria-label="{{ ad.clicks }} clicks"></span>
+                                    </div>
+                                    <span class="ad-chart-label">{{ ad.label }}</span>
+                                </div>
+                            {% empty %}
+                                <p>No advertisement data available.</p>
+                            {% endfor %}
+                        </div>
+                    {% endwith %}
+                    <small>Views <span class="ad-chart-bar views" style="display: inline-block; height: 10px;"></span> Clicks <span class="ad-chart-bar clicks" style="display: inline-block; height: 10px;"></span></small>
+                </div>
+
+                <div class="ad-analytics-panel">
+                    <h3>Performance by position</h3>
+                    <table class="ad-analytics-table">
+                        <thead><tr><th>Position</th><th>Views</th><th>Clicks</th></tr></thead>
+                        <tbody>
+                            {% for position in analytics_summary.position_data %}
+                                <tr><td>{{ position.label }}</td><td>{{ position.views }}</td><td>{{ position.clicks }}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="ad-analytics-panel">
+                <h3>Advertisement performance</h3>
+                <table class="ad-analytics-table">
+                    <thead><tr><th>Advertisement</th><th>Position</th><th>Views</th><th>Clicks</th><th>CTR</th></tr></thead>
+                    <tbody>
+                        {% for ad in analytics_summary.advertisements_data %}
+                            <tr><td>{{ ad.label }}</td><td>{{ ad.position }}</td><td>{{ ad.views }}</td><td>{{ ad.clicks }}</td><td>{{ ad.ctr|floatformat:2 }}%</td></tr>
+                        {% empty %}
+                            <tr><td colspan="5">No advertisement data available.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p><strong>Overall CTR:</strong> {{ analytics_summary.ctr|floatformat:2 }}%</p>
+            </div>
+        </section>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

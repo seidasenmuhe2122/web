@@ -1,0 +1,318 @@
+#
+msgid ""
+msgstr ""
+"Language: am\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Job Portal Ethiopia"
+msgstr "የኢትዮጵያ የሥራ ፖርታል"
+
+msgid "Premium hiring platform"
+msgstr "የላቀ የቅጥር መድረክ"
+
+msgid "Find your next opportunity"
+msgstr "ቀጣዩን የሥራ እድልዎን ያግኙ"
+
+msgid ""
+"Discover top jobs, connect with employers, and grow your career with a "
+"smarter job search experience."
+msgstr "ምርጥ ሥራዎችን ያግኙ፣ ከአሠሪዎች ጋር ይገናኙ፣ እና በተሻለ የሥራ ፍለጋ ልምድ ሙያዎን ያሳድጉ።"
+
+msgid "Active Jobs"
+msgstr "ንቁ ሥራዎች"
+
+msgid "Employers"
+msgstr "አሠሪዎች"
+
+msgid "Search"
+msgstr "ፈልግ"
+
+msgid "Location"
+msgstr "ቦታ"
+
+msgid "Job Type"
+msgstr "የሥራ አይነት"
+
+msgid "Experience"
+msgstr "የልምድ ደረጃ"
+
+msgid "All"
+msgstr "ሁሉም"
+
+msgid "Featured"
+msgstr "ተለይቶ የቀረበ"
+
+msgid "Urgent"
+msgstr "አስቸኳይ"
+
+msgid "Negotiable"
+msgstr "ሊደራደር የሚችል"
+
+msgid "View Details"
+msgstr "ዝርዝሩን ይመልከቱ"
+
+msgid "vacancies"
+msgstr "ክፍት ቦታዎች"
+
+msgid "views"
+msgstr "እይታዎች"
+
+msgid "Deadline"
+msgstr "የመጨረሻ ቀን"
+
+msgid "No jobs found."
+msgstr "ምንም ሥራ አልተገኘም።"
+
+msgid "Please add a new job from the Admin Dashboard."
+msgstr "እባክዎ ከአስተዳደር ዳሽቦርድ አዲስ ሥራ ያክሉ።"
+
+msgid "Featured Jobs"
+msgstr "ተለይተው የቀረቡ ሥራዎች"
+
+msgid "About"
+msgstr "ስለ እኛ"
+
+msgid "Contact"
+msgstr "ያግኙን"
+
+msgid "Privacy Policy"
+msgstr "የግላዊነት መመሪያ"
+
+msgid "Terms and Conditions"
+msgstr "ውሎች እና ሁኔታዎች"
+
+msgid "Close"
+msgstr "ዝጋ"
+
+msgid "Send us a message"
+msgstr "መልዕክብዎን ይላኩልን"
+
+msgid "Send message"
+msgstr "መልዕክብ ላክ"
+
+msgid ""
+"Contact submissions are temporarily unavailable. Please check back later."
+msgstr "የመገናኛ መልዕክቶች ለጊዜው አይገኙም። እባክዎ ቆይተው ይመለሱ።"
+
+msgid "Title, company or category"
+msgstr "ርዕስ፣ ኩባንያ ወይም ምድብ"
+
+msgid "City or country"
+msgstr "ከተማ ወይም ሀገር"
+
+msgid "Full-time"
+msgstr "የሙሉ ጊዜ"
+
+msgid "Part-time"
+msgstr "የከፊል ጊዜ"
+
+msgid "Remote"
+msgstr "የርቀት"
+
+msgid "Contract"
+msgstr "ውል"
+
+msgid "Internship"
+msgstr "ኢንተርንሺፕ"
+
+msgid "Fresh Graduate"
+msgstr "አዲስ ተመራቂ"
+
+msgid "1-3 Years"
+msgstr "1-3 ዓመታት"
+
+msgid "3-5 Years"
+msgstr "3-5 ዓመታት"
+
+msgid "5+ Years"
+msgstr "ከ5 ዓመት በላይ"
+
+msgid "Vacancies"
+msgstr "ክፍት ቦታዎች"
+
+msgid "Salary"
+msgstr "ደመወዝ"
+
+msgid "Application deadline"
+msgstr "የማመልከቻ ማብቂያ"
+
+msgid "Job Description"
+msgstr "የሥራ መግለጫ"
+
+msgid "Apply Now"
+msgstr "አሁኑኑ ያመልክቱ"
+
+msgid "Operational overview"
+msgstr "የአሠራር አጠቃላይ እይታ"
+
+msgid "Total jobs"
+msgstr "ጠቅላላ ሥራዎች"
+
+msgid "Featured jobs"
+msgstr "ተለይተው የቀረቡ ሥራዎች"
+
+msgid "Urgent jobs"
+msgstr "አስቸኳይ ሥራዎች"
+
+msgid "Active advertisements"
+msgstr "ንቁ ማስታወቂያዎች"
+
+msgid "Advertisement performance"
+msgstr "የማስታወቂያ አፈጻጸም"
+
+msgid "Advertisement views"
+msgstr "የማስታወቂያ እይቶች"
+
+msgid "Advertisement clicks"
+msgstr "የማስታወቂያ ጠቅታዎች"
+
+msgid "Overall CTR"
+msgstr "ጠቅላል CTR"
+
+msgid "Total advertisements"
+msgstr "ጠቅላላ ማስታወቂያዎች"
+
+msgid "Advertisement"
+msgstr "ማስታወቂያ"
+
+msgid "Position"
+msgstr "አቀማመጥ"
+
+msgid "Views"
+msgstr "እይቶች"
+
+msgid "Clicks"
+msgstr "ጠቅታዎች"
+
+msgid "No advertisement data available."
+msgstr "ምንም የማስታወቂያ መረጃ የለም።"
+
+msgid "View full advertisement analytics"
+msgstr "ሙሉ የማስታወቂያ ትንታኔ ይመልከቱ"
+
+msgid "Choose language"
+msgstr "ቋንቋ ይምረጡ"
+
+msgid "Dashboard"
+msgstr "ዳሽቦርድ"
+
+msgid "Home"
+msgstr "መነሻ"
+
+msgid "Authentication and Authorization"
+msgstr "ማረጋገጫ እና ፈቃድ"
+
+msgid "Groups"
+msgstr "ቡድኖች"
+
+msgid "Users"
+msgstr "ተጠቃሚዎች"
+
+msgid "Jobs"
+msgstr "ሥራዎች"
+
+msgid "Advertisements"
+msgstr "ማስታወቂያዎች"
+
+msgid "Contact messages"
+msgstr "የእውቂያ መልዕክቶች"
+
+msgid "Legal Pages"
+msgstr "የህግ ገጾች"
+
+msgid "Website Settings"
+msgstr "የድረ-ገጽ ማስተካከያዎች"
+
+msgid "Site administration"
+msgstr "የጣቢያ አስተዳደር"
+
+msgid "Add"
+msgstr "ጨምር"
+
+msgid "Change"
+msgstr "ቀይር"
+
+msgid "Account"
+msgstr "መለያ"
+
+msgid "Log out"
+msgstr "ውጣ"
+
+msgid "From:"
+msgstr "ከ:"
+
+msgid "Original subject:"
+msgstr "የመጀመሪያ ርዕስ:"
+
+msgid "Message:"
+msgstr "መልእክት:"
+
+msgid "Send reply"
+msgstr "መልስ ላክ"
+
+msgid "Cancel"
+msgstr "ሰርዝ"
+
+msgid "Career Platform"
+msgstr "የሙያ መድረክ"
+
+msgid "Browse Jobs"
+msgstr "ሥራዎችን ያስሱ"
+
+msgid "View Categories"
+msgstr "ምድቦችን ይመልከቱ"
+
+msgid "Live"
+msgstr "ቀጥታ"
+
+msgid "Popular"
+msgstr "ታዋቂ"
+
+msgid "Featured Job Categories"
+msgstr "ተለይተው የቀረቡ የሥራ ምድቦች"
+
+msgid "See all categories"
+msgstr "ሁሉንም ምድቦች ይመልከቱ"
+
+msgid "Explore jobs"
+msgstr "ሥራዎችን ያስሱ"
+
+msgid "Open roles"
+msgstr "ክፍት የሥራ መደቦች"
+
+msgid "Latest Jobs"
+msgstr "የቅርብ ጊዜ ሥራዎች"
+
+msgid "Browse all jobs"
+msgstr "ሁሉንም ሥራዎች ያስሱ"
+
+msgid "View job"
+msgstr "ሥራውን ይመልከቱ"
+
+msgid "No job openings available yet."
+msgstr "እስካሁን ምንም የሥራ ክፍት ቦታ የለም።"
+
+msgid "Recent Blog Posts"
+msgstr "የቅርብ ጊዜ የብሎግ ጽሑፎች"
+
+msgid "Read all posts"
+msgstr "ሁሉንም ጽሑፎች ያንብቡ"
+
+msgid "Read article"
+msgstr "ጽሑፉን ያንብቡ"
+
+msgid "Close and return to jobs"
+msgstr "ዝጋ እና ወደ ሥራዎች ተመለስ"
+
+msgid "Kombolcha, Ethiopia"
+msgstr "ኮምቦልቻ፣ ኢትዮጵያ"
+
+msgid "Your name"
+msgstr "ስምዎ"
+
+msgid "How can we help?"
+msgstr "እንዴት ልንረዳዎት እንችላለን?"
+
+msgid "Write your message here..."
+msgstr "መልዕክትዎን እዚህ ይጻፉ..."

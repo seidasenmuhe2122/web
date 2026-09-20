@@ -1,0 +1,92 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block content_title %}{% trans 'Dashboard' %}{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{% trans 'Home' %}</a></li>
+        <li class="breadcrumb-item">{% trans 'Dashboard' %}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    {% get_side_menu using="app_list" as dashboard_list %}
+    <div class="col-12">
+        <style>
+            .dashboard-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+            .dashboard-kpi { background: var(--body-bg, #fff); border: 1px solid var(--hairline-color, #ddd); border-radius: 6px; padding: 16px; }
+            .dashboard-kpi strong { display: block; font-size: 1.8rem; margin-top: 5px; }
+            .dashboard-section { background: var(--body-bg, #fff); border: 1px solid var(--hairline-color, #ddd); border-radius: 6px; margin-bottom: 20px; padding: 16px; overflow-x: auto; }
+            .dashboard-table { width: 100%; min-width: 560px; border-collapse: collapse; }
+            .dashboard-table th, .dashboard-table td { border-bottom: 1px solid var(--hairline-color, #ddd); padding: 9px; text-align: left; }
+            .dashboard-table th { font-weight: 600; }
+            @media (max-width: 900px) { .dashboard-kpis { grid-template-columns: repeat(2, 1fr); } }
+            @media (max-width: 600px) { .dashboard-kpis { grid-template-columns: 1fr; } }
+        </style>
+
+        <section class="dashboard-section" aria-label="{% trans 'Operational overview' %}">
+            <h2>{% trans 'Operational overview' %}</h2>
+            <div class="dashboard-kpis">
+                <div class="dashboard-kpi">{% trans 'Total jobs' %}<strong>{{ admin_dashboard_stats.jobs }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Featured jobs' %}<strong>{{ admin_dashboard_stats.featured_jobs }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Urgent jobs' %}<strong>{{ admin_dashboard_stats.urgent_jobs }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Active advertisements' %}<strong>{{ admin_dashboard_stats.active_advertisements }}</strong></div>
+            </div>
+        </section>
+
+        <section class="dashboard-section" aria-label="{% trans 'Advertisement performance' %}">
+            <h2>{% trans 'Advertisement performance' %}</h2>
+            <div class="dashboard-kpis">
+                <div class="dashboard-kpi">{% trans 'Advertisement views' %}<strong>{{ admin_dashboard_stats.ad_views }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Advertisement clicks' %}<strong>{{ admin_dashboard_stats.ad_clicks }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Overall CTR' %}<strong>{{ admin_dashboard_stats.ad_ctr|floatformat:2 }}%</strong></div>
+                <div class="dashboard-kpi">{% trans 'Total advertisements' %}<strong>{{ admin_dashboard_stats.advertisements }}</strong></div>
+            </div>
+            <table class="dashboard-table">
+                <thead><tr><th>{% trans 'Advertisement' %}</th><th>{% trans 'Position' %}</th><th>{% trans 'Views' %}</th><th>{% trans 'Clicks' %}</th><th>CTR</th></tr></thead>
+                <tbody>
+                    {% for ad in admin_dashboard_stats.top_advertisements %}
+                        <tr>
+                            <td><a href="{% url 'admin:jobs_advertisement_change' ad.pk %}">{{ ad.title }}</a></td>
+                            <td>{{ ad.get_position_display }}</td>
+                            <td>{{ ad.views_count }}</td>
+                            <td>{{ ad.clicks_count }}</td>
+                            <td>{{ ad.click_through_rate|floatformat:2 }}%</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5">{% trans 'No advertisement data available.' %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p><a class="button" href="{% url 'admin:jobs_advertisement_changelist' %}">{% trans 'View full advertisement analytics' %}</a></p>
+        </section>
+
+        <div class="row">
+            {% for app in dashboard_list %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card mb-3">
+                        <div class="card-header"><h5 class="m-0">{{ app.name }}</h5></div>
+                        <div class="card-body">
+                            <table class="table table-sm"><tbody>
+                                {% for model in app.models %}
+                                    <tr>
+                                        <td>{% if model.url %}<a href="{{ model.url }}">{{ model.name }}</a>{% else %}{{ model.name }}{% endif %}</td>
+                                        <td>
+                                            <div class="btn-group float-end">
+                                                {% if model.add_url %}<a href="{{ model.add_url }}" class="btn btn-sm {{ jazzmin_ui.button_classes.success }} addlink">{% trans 'Add' %}</a>{% endif %}
+                                                {% if model.url %}<a href="{{ model.url }}" class="btn btn-sm {{ jazzmin_ui.button_classes.info }} changelink">{% trans 'Change' %}</a>{% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody></table>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

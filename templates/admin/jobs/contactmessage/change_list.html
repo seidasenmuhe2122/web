@@ -1,0 +1,10 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    <li class="contact-admin-toolbar-label">Contact controls</li>
+    <li><a href="{{ compose_email_url }}" class="contact-admin-toolbar-button" style="display:inline-block!important;padding:8px 12px!important;border-radius:5px!important;background:#6f42c1!important;color:#fff!important;font-weight:600!important;text-decoration:none!important;">Write email</a></li>
+    <li><a href="{{ outbox_url }}" class="contact-admin-toolbar-button" style="display:inline-block!important;padding:8px 12px!important;border-radius:5px!important;background:#fd7e14!important;color:#fff!important;font-weight:600!important;text-decoration:none!important;">Outbox</a></li>
+    <li><a href="{{ contact_page_toggle_url }}" class="contact-admin-toolbar-button" style="display:inline-block!important;padding:8px 12px!important;border-radius:5px!important;background:#0d6efd!important;color:#fff!important;font-weight:600!important;text-decoration:none!important;">{{ contact_page_toggle_label }}</a></li>
+    <li><a href="{{ contact_button_toggle_url }}" class="contact-admin-toolbar-button" style="display:inline-block!important;padding:8px 12px!important;border-radius:5px!important;background:#198754!important;color:#fff!important;font-weight:600!important;text-decoration:none!important;">{{ contact_button_toggle_label }}</a></li>
+    {{ block.super }}
+{% endblock %}

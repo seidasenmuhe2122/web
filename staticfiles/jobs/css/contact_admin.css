@@ -1,0 +1,62 @@
+.contact-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    align-items: center;
+}
+
+.contact-actions .button {
+    margin: 0;
+    padding: 5px 9px;
+    border-radius: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.contact-action-view {
+    background: #495057;
+    color: #fff !important;
+}
+
+.contact-action-reply {
+    background: #198754;
+    color: #fff !important;
+}
+
+.contact-action-toggle {
+    background: #0d6efd;
+    color: #fff !important;
+}
+
+.contact-action-email,
+.contact-action-settings {
+    background: #f1f3f5;
+    color: #343a40 !important;
+}
+
+.contact-status-read,
+.contact-status-unread {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.contact-status-read {
+    background: #d1e7dd;
+    color: #0f5132;
+}
+
+.contact-status-unread {
+    background: #fff3cd;
+    color: #664d03;
+}
+
+.contact-admin-toolbar-button {
+    background: #0d6efd !important;
+    border-radius: 4px !important;
+    color: #fff !important;
+    font-weight: 600;
+}

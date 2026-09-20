@@ -1,0 +1,153 @@
+#
+msgid ""
+msgstr ""
+"Language: om\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "About"
+msgstr "Waa'ee keenya"
+
+msgid "Contact"
+msgstr "Nu qunnamaa"
+
+msgid "Privacy Policy"
+msgstr "Imaammata iccitii"
+
+msgid "Terms and Conditions"
+msgstr "Ulaagaalee fi haalota"
+
+msgid "Close"
+msgstr "Cufi"
+
+msgid "Send us a message"
+msgstr "Ergaa nuuf ergi"
+
+msgid "Send message"
+msgstr "Ergaa ergi"
+
+msgid "Premium hiring platform"
+msgstr "Waltajjii hojii argamsiisu olaanaa"
+
+msgid "Find your next opportunity"
+msgstr "Carraa hojii itti aanu argadhu"
+
+msgid ""
+"Discover top jobs, connect with employers, and grow your career with a "
+"smarter job search experience."
+msgstr ""
+"Hojiiwwan gaarii argadhu, hojjechiisummaa waliin wal qunnami, hojii kee "
+"guddifadh u."
+
+msgid "Active Jobs"
+msgstr "Hojiiwwan jiran"
+
+msgid "Employers"
+msgstr "Hojjechiisummaa"
+
+msgid "Search"
+msgstr "Barbaadi"
+
+msgid "Location"
+msgstr "Bakka"
+
+msgid "Job Type"
+msgstr "Gosa hojii"
+
+msgid "Experience"
+msgstr "Muuxannoo"
+
+msgid "All"
+msgstr "Hunda"
+
+msgid "Featured"
+msgstr "Filatamaa"
+
+msgid "Urgent"
+msgstr "Ariifachiisaa"
+
+msgid "Negotiable"
+msgstr "Waliigaltee danda'amu"
+
+msgid "View Details"
+msgstr "Bal'ina ilaali"
+
+msgid "vacancies"
+msgstr "bakka hojii"
+
+msgid "views"
+msgstr "ilaalcha"
+
+msgid "Deadline"
+msgstr "Guyyaa xumuraa"
+
+msgid "No jobs found."
+msgstr "Hojiiwwan hin argamne."
+
+msgid "Please add a new job from the Admin Dashboard."
+msgstr "Maaloo Dashboard Admin irraa hojii haaraa dabali."
+
+msgid "Featured Jobs"
+msgstr "Hojiiwwan filatamoo"
+
+msgid "Career Platform"
+msgstr "Waltajjii hojii"
+
+msgid "Browse Jobs"
+msgstr "Hojiiwwan barbaadi"
+
+msgid "View Categories"
+msgstr "Ramaddii ilaali"
+
+msgid "Live"
+msgstr "Kallattii"
+
+msgid "Popular"
+msgstr "Beekamaa"
+
+msgid "Featured Job Categories"
+msgstr "Ramaddii hojii filatamoo"
+
+msgid "See all categories"
+msgstr "Ramaddii hunda ilaali"
+
+msgid "Explore jobs"
+msgstr "Hojiiwwan barbaadi"
+
+msgid "Open roles"
+msgstr "Carraawwan hojii banaa"
+
+msgid "Latest Jobs"
+msgstr "Hojiiwwan haaraa"
+
+msgid "Browse all jobs"
+msgstr "Hojiiwwan hunda barbaadi"
+
+msgid "View job"
+msgstr "Hojii ilaali"
+
+msgid "No job openings available yet."
+msgstr "Ammaaf carraan hojii hin jiru."
+
+msgid "Recent Blog Posts"
+msgstr "Barreeffamoota blogii haaraa"
+
+msgid "Read all posts"
+msgstr "Barreeffamoota hunda dubbisi"
+
+msgid "Read article"
+msgstr "Barreeffama dubbisi"
+
+msgid "Close and return to jobs"
+msgstr "Cufiitii gara hojiiwwanitti deebi i"
+
+msgid "Kombolcha, Ethiopia"
+msgstr "Kombolcha, Itoophiyaa"
+
+msgid "Your name"
+msgstr "Maqaa kee"
+
+msgid "How can we help?"
+msgstr "Akkamitti si gargaaruu dandeenya?"
+
+msgid "Write your message here..."
+msgstr "Ergaa kee as irratti barreessi..."

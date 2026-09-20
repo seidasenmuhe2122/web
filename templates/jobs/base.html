@@ -1,0 +1,598 @@
+{% load i18n security_tags %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if site_settings %}{{ site_settings.site_name }}{% else %}AFRI JOB ETHIOPIA{% endif %}</title>
+    {% if site_settings and site_settings.site_favicon %}
+        <link rel="icon" href="{{ site_settings.site_favicon.url }}">
+    {% endif %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-1: #071421;
+            --bg-2: #101b2d;
+            --text: #edf6ff;
+            --muted: #bfd3ec;
+            --primary: #63d9ff;
+            --secondary: #8b5cf6;
+            --success: #34d399;
+            --glass: rgba(255,255,255,0.08);
+            --glass-border: rgba(255,255,255,0.12);
+            --font-family: "Segoe UI", Tahoma, sans-serif;
+            --corner-radius: 28px;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(99, 217, 255, 0.18), transparent 25%),
+                radial-gradient(circle at bottom right, rgba(139, 92, 246, 0.20), transparent 28%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2));
+            color: var(--text);
+            min-height: 100vh;
+            font-family: var(--font-family);
+            background-image: linear-gradient(rgba(7, 20, 33, 0.82), rgba(16, 27, 45, 0.88)), var(--site-background-image, none);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .site-background-text {
+            position: fixed;
+            inset: 50% auto auto 50%;
+            transform: translate(-50%, -50%) rotate(-18deg);
+            z-index: 0;
+            pointer-events: none;
+            color: var(--text);
+            opacity: 0.045;
+            font-size: clamp(3rem, 11vw, 10rem);
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .navbar {
+            backdrop-filter: blur(18px);
+            background: rgba(12, 18, 28, 0.72) !important;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .navbar .nav-link {
+            background-color: transparent !important;
+            border: 1px solid #fff !important;
+            color: #fff !important;
+            padding: 8px 16px !important;
+            border-radius: 4px !important;
+            margin-right: 15px !important;
+            transition: all 0.3s ease !important;
+        }
+
+        .navbar .nav-link:hover {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+
+        .navbar-brand img { max-height: 38px; }
+
+        .glass-panel {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 25px 60px rgba(15, 23, 42, 0.35);
+        }
+
+        .hero-3d {
+            position: relative;
+            overflow: hidden;
+            border-radius: var(--corner-radius);
+            padding: 32px;
+            min-height: 260px;
+            background: linear-gradient(135deg, rgba(99, 217, 255, 0.10), rgba(139, 92, 246, 0.10));
+            border: 1px solid rgba(255,255,255,0.10);
+            transform-style: preserve-3d;
+            transition: transform 0.18s ease;
+        }
+
+        .hero-3d::before,
+        .hero-3d::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(12px);
+            opacity: 0.8;
+        }
+
+        .hero-3d::before {
+            width: 220px;
+            height: 220px;
+            right: -30px;
+            top: -40px;
+            background: radial-gradient(circle, rgba(99,217,255,0.45), transparent 60%);
+        }
+
+        .hero-3d::after {
+            width: 180px;
+            height: 180px;
+            left: -10px;
+            bottom: -20px;
+            background: radial-gradient(circle, rgba(139,92,246,0.45), transparent 60%);
+        }
+
+        .floating-cube, .floating-orb, .floating-ring {
+            position: absolute;
+            pointer-events: none;
+            animation: drift 12s ease-in-out infinite alternate;
+        }
+
+        .floating-cube {
+            width: 90px;
+            height: 90px;
+            right: 12%;
+            top: 12%;
+            border: 1px solid rgba(255,255,255,0.35);
+            transform: rotate(25deg);
+            box-shadow: 0 0 30px rgba(99,217,255,0.20);
+        }
+
+        .floating-orb {
+            width: 72px;
+            height: 72px;
+            left: 10%;
+            bottom: 18%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(99,217,255,0.35), rgba(139,92,246,0.20));
+        }
+
+        .floating-ring {
+            width: 148px;
+            height: 148px;
+            right: 28%;
+            bottom: -12px;
+            border-radius: 50%;
+            border: 1px solid rgba(99,217,255,0.6);
+            transform: rotateX(70deg);
+        }
+
+        @keyframes drift {
+            from { transform: translateY(0) translateX(0) rotate(0deg); }
+            to { transform: translateY(-18px) translateX(12px) rotate(10deg); }
+        }
+
+        .job-card {
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(15, 23, 42, 0.45);
+            color: var(--text);
+            transform-style: preserve-3d;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+            box-shadow: 0 10px 30px rgba(15,23,42,0.16);
+        }
+
+        .job-card:hover {
+            transform: rotateX(5deg) rotateY(-6deg) translateY(-6px);
+            border-color: rgba(99,217,255,0.45);
+            box-shadow: 0 20px 40px rgba(99,217,255,0.12);
+        }
+
+        .previous-job-paper {
+            background-color: var(--job-paper-background-color, #ffffff);
+            background-image: linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92));
+            background-position: center;
+            background-size: cover;
+            color: #1f2937;
+        }
+
+        .previous-job-paper .text-white,
+        .previous-job-paper .text-white-50,
+        .previous-job-paper .text-white-50 strong {
+            color: #334155 !important;
+        }
+
+        .job-preview-description {
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            line-clamp: 4;
+            overflow: hidden;
+        }
+
+        .job-paper {
+            background-color: var(--job-paper-background-color, #ffffff);
+            background-position: center;
+            background-size: cover;
+            overflow: hidden;
+            position: relative;
+            width: min(100%, var(--job-paper-width, 860px));
+            min-height: var(--job-paper-height, 700px);
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .job-paper-media {
+            inset: 0;
+            object-fit: cover;
+            opacity: 0.16;
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+            z-index: 0;
+        }
+
+        .job-paper > .card-body {
+            position: relative;
+            z-index: 1;
+        }
+
+        .job-detail-layout {
+            align-items: start;
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: minmax(0, var(--job-paper-width, 860px)) minmax(220px, 1fr);
+        }
+
+        .job-detail-main {
+            min-width: 0;
+        }
+
+        .job-detail-sidebar {
+            min-width: 0;
+        }
+
+        .glass-select {
+            background: rgba(15, 23, 42, 0.60);
+            color: var(--text);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .ad-container {
+            position: relative;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.82), rgba(30, 41, 59, 0.62));
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 12px;
+            text-align: center;
+            padding: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(2, 6, 23, 0.16);
+        }
+
+        .ad-content {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-areas: "media" "text";
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .ad-text {
+            grid-area: text;
+            color: var(--ad-text-color);
+            font-size: var(--ad-text-size);
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+            min-width: 0;
+        }
+
+        .ad-text p {
+            margin: 0;
+        }
+
+        .ad-text a {
+            color: inherit;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .ad-media {
+            grid-area: media;
+            max-width: 100%;
+            min-width: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .ad-media img,
+        .ad-media video,
+        .ad-media iframe,
+        .ad-media object,
+        .ad-media embed,
+        .ad-media ins {
+            box-sizing: border-box;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .ad-media iframe,
+        .ad-media object,
+        .ad-media embed,
+        .ad-media ins.adsbygoogle {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .ad-media-manual img,
+        .ad-media-manual video {
+            width: min(var(--ad-width), 100%);
+            height: var(--ad-height);
+            object-fit: contain;
+        }
+
+        .ad-text-above .ad-content {
+            grid-template-areas: "text" "media";
+        }
+
+        .ad-text-left .ad-content {
+            grid-template-columns: minmax(100px, 0.35fr) minmax(0, 1fr);
+            grid-template-areas: "text media";
+            text-align: left;
+        }
+
+        .ad-text-right .ad-content {
+            grid-template-columns: minmax(0, 1fr) minmax(100px, 0.35fr);
+            grid-template-areas: "media text";
+            text-align: left;
+        }
+
+        .full-page-ad {
+            width: 100%;
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 575.98px) {
+            .ad-container {
+                padding: 8px;
+            }
+
+            .ad-text-left .ad-content,
+            .ad-text-right .ad-content {
+                grid-template-columns: minmax(0, 1fr);
+                grid-template-areas: "media" "text";
+                text-align: center;
+            }
+        }
+
+        .urgent-badge {
+            background: linear-gradient(135deg, #ef4444, #f97316);
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .featured-badge {
+            background: linear-gradient(135deg, #facc15, #f59e0b);
+            color: #111827;
+            font-size: 0.8rem;
+        }
+
+        .search-panel {
+            background: rgba(8, 17, 32, 0.55);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: var(--corner-radius, 24px);
+            backdrop-filter: blur(15px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            border: none;
+            box-shadow: 0 12px 30px rgba(59,130,246,0.25);
+        }
+
+        .text-white-50 { color: rgba(255,255,255,0.5) !important; }
+        .text-light-emphasis { color: rgba(255,255,255,0.75) !important; }
+
+        @media (max-width: 767.98px) {
+            .job-paper {
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 1450px) {
+            .job-detail-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .job-detail-sidebar {
+                width: min(100%, 860px);
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .navbar .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .navbar-brand {
+                min-width: 0;
+            }
+
+            .navbar-brand span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .navbar .form-select {
+                max-width: 145px;
+            }
+
+            .hero-3d {
+                padding: 24px 18px;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100"
+    data-site-bg="{{ site_settings.background_color|default:'#071421' }}"
+    data-site-text="{{ site_settings.text_color|default:'#edf6ff' }}"
+    data-site-primary="{{ site_settings.primary_color|default:'#63d9ff' }}"
+    data-site-secondary="{{ site_settings.secondary_color|default:'#8b5cf6' }}"
+    data-site-font="{{ site_settings.font_family|default:'Segoe UI, Tahoma, sans-serif' }}"
+    data-site-radius="{{ site_settings.corner_radius|default:28 }}"
+    data-site-background-image="{% if site_settings and site_settings.background_image %}{{ site_settings.background_image.url }}{% endif %}">
+    {% if site_settings and site_settings.background_text %}
+        <div class="site-background-text" aria-hidden="true">{{ site_settings.background_text|sanitize_html }}</div>
+    {% endif %}
+
+    {% if site_settings and site_settings.top_bar_text %}
+        <div class="bg-primary text-dark text-center small py-1 fixed-top" style="z-index: 1040;">{{ site_settings.top_bar_text|sanitize_html }}</div>
+    {% endif %}
+
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top"{% if site_settings and site_settings.top_bar_text %} style="top: 26px;"{% endif %}>
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
+                {% if site_settings and site_settings.site_logo %}
+                    <img src="{{ site_settings.site_logo.url }}" alt="{{ site_settings.site_name|default:'AFRI JOB ETHIOPIA' }}" class="me-2 rounded">
+                {% endif %}
+                <span class="fw-bold">
+                    {% if site_settings %}{{ site_settings.site_name|default:'AFRI JOB ETHIOPIA' }}{% else %}AFRI JOB ETHIOPIA{% endif %}
+                    {% if site_settings and site_settings.header_text and site_settings.header_text != site_settings.site_name %}
+                        <small class="d-block brand-header-text">{{ site_settings.header_text }}</small>
+                    {% endif %}
+                </span>
+            </a>
+
+            <div class="d-flex align-items-center gap-3 ms-auto">
+                <div class="d-flex align-items-center gap-3 small">
+                    <a href="{% url 'home' %}" class="nav-link">{% translate "Home" %}</a>
+                    <a href="{% url 'category_list' %}" class="nav-link">{% translate "Job Categories" %}</a>
+                    <a href="{% url 'blog_list' %}" class="nav-link">{% translate "Blog" %}</a>
+                </div>
+                {% if not site_settings or site_settings.show_about_contact_links %}
+                    <div class="d-flex align-items-center gap-2 small">
+                        {% if request.path != '/contact-us/' and request.path != '/contact-us/message/' %}
+                            <a href="{% url 'about_us' %}" class="btn btn-sm btn-outline-light px-2" data-page="about">{% translate "About" %}</a>
+                        {% endif %}
+                        {% if not contact_page or contact_page.contact_enabled %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-light dropdown-toggle px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-address-book me-1"></i>{% translate "Contact" %}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'contact_us' %}">{% translate "Contact us" %}</a></li>
+                                    {% if not site_settings or site_settings.contact_submit_enabled %}
+                                        {% if request.path != '/about-us/' and request.path != '/contact-us/' and request.path != '/contact-us/message/' %}
+                                            <li><a class="dropdown-item" href="{% url 'contact_message' %}">{% translate "Send us a message" %}</a></li>
+                                        {% endif %}
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% for page in custom_header_pages %}
+                    <a href="{% url 'custom_page' page.slug %}" class="btn btn-sm btn-outline-light px-2">{{ page.title }}</a>
+                {% endfor %}
+                {% for page in legal_header_pages %}
+                    <a href="{% url 'custom_page' page.page_type %}" class="btn btn-sm btn-outline-light px-2">{{ page.title }}</a>
+                {% endfor %}
+                {% if not site_settings or site_settings.show_language_switcher %}
+                <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                    <select name="language" class="form-select form-select-sm glass-select" onchange="switchFrontendLanguage(this)">
+                        {% for code, name in frontend_languages %}
+                            <option value="{{ code }}" {% if code == LANGUAGE_CODE %}selected{% endif %}>{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+                {% endif %}
+
+            </div>
+        </div>
+    </nav>
+
+    {% if header_ad and not site_settings or header_ad and site_settings.show_advertisements %}
+        <div class="container mt-5 pt-3">
+            {% include 'jobs/_advertisement.html' with ad=header_ad %}
+        </div>
+    {% endif %}
+
+    <main class="container my-4 flex-grow-1 position-relative" style="padding-top: 40px; z-index: 1;">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-dark text-white pt-4 pb-3 mt-auto position-relative" style="z-index: 1;">
+        <div class="container text-center">
+            {% if footer_ad and not site_settings or footer_ad and site_settings.show_advertisements %}
+                {% include 'jobs/_advertisement.html' with ad=footer_ad %}
+            {% endif %}
+            <p class="mb-1">{% if site_settings and site_settings.footer_text %}{{ site_settings.footer_text|sanitize_html }}{% elif site_settings %}© {{ site_settings.site_name }}. All rights reserved.{% else %}© AFRI JOB ETHIOPIA. All rights reserved.{% endif %}</p>
+            <p class="small mb-2 site-developer-credit">© 2026 AFRI JOB ETHIOPIA. All rights reserved. Developed By Team Of XIO SNIPER.</p>
+            {% if not site_settings or site_settings.show_footer_links %}<div class="small mb-2">
+                <a href="{% url 'privacy_policy' %}" class="text-white-50 text-decoration-none me-3">{% translate "Privacy Policy" %}</a>
+                <a href="{% url 'terms_and_conditions' %}" class="text-white-50 text-decoration-none">{% translate "Terms and Conditions" %}</a>
+            </div>{% endif %}
+            {% for page in custom_footer_pages %}
+                <a href="{% url 'custom_page' page.slug %}" class="text-white-50 text-decoration-none me-3">{{ page.title }}</a>
+            {% endfor %}
+            {% for page in legal_footer_pages %}
+                <a href="{% url 'custom_page' page.page_type %}" class="text-white-50 text-decoration-none me-3">{{ page.title }}</a>
+            {% endfor %}
+            {% if site_settings and site_settings.contact_email %}
+                <small class="text-white-50"><i class="fa-solid fa-envelope me-1"></i> {{ site_settings.contact_email }} | <i class="fa-solid fa-phone me-1"></i> {{ site_settings.contact_phone }}</small>
+            {% endif %}
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.8.1/dist/vanilla-tilt.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var site = document.body.dataset;
+            document.documentElement.style.setProperty('--bg-1', site.siteBg);
+            document.documentElement.style.setProperty('--text', site.siteText);
+            document.documentElement.style.setProperty('--primary', site.sitePrimary);
+            document.documentElement.style.setProperty('--secondary', site.siteSecondary);
+            document.documentElement.style.setProperty('--font-family', '"' + site.siteFont + '"');
+            document.documentElement.style.setProperty('--corner-radius', site.siteRadius + 'px');
+            if (site.siteBackgroundImage) {
+                document.documentElement.style.setProperty('--site-background-image', 'url("' + site.siteBackgroundImage + '")');
+            }
+
+            if (typeof VanillaTilt !== 'undefined') {
+                VanillaTilt.init(document.querySelectorAll('.job-card'), {
+                    max: 12,
+                    speed: 800,
+                    glare: true,
+                    'max-glare': 0.18,
+                    scale: 1.02,
+                });
+            }
+
+            document.querySelectorAll('.hero-3d').forEach(function (hero) {
+                hero.addEventListener('mousemove', function (event) {
+                    const rect = hero.getBoundingClientRect();
+                    const x = (event.clientX - rect.left) / rect.width;
+                    const y = (event.clientY - rect.top) / rect.height;
+                    hero.style.transform = 'perspective(1200px) rotateX(' + ((0.5 - y) * 8) + 'deg) rotateY(' + ((x - 0.5) * 10) + 'deg)';
+                });
+
+                hero.addEventListener('mouseleave', function () {
+                    hero.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg)';
+                });
+            });
+
+            window.switchFrontendLanguage = function (select) {
+                var languageCodes = ['en', 'am', 'aa', 'ar', 'es', 'fr', 'om'];
+                var path = window.location.pathname.replace(new RegExp('^/(' + languageCodes.join('|') + ')(?=/|$)'), '') || '/';
+                var language = select.value;
+                select.form.elements.next.value = path + window.location.search;
+                if (language !== 'en') {
+                    select.form.elements.next.value = '/' + language + path + window.location.search;
+                }
+                select.form.submit();
+            };
+
+        });
+    </script>
+</body>
+</html>

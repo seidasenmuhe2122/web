@@ -1,0 +1,72 @@
+{% extends 'jobs/base.html' %}
+{% load i18n security_tags %}
+
+{% block content %}
+<div class="row job-detail-layout" style="--job-paper-width: {{ site_settings.job_paper_width|default:860 }}px; --job-paper-height: {{ site_settings.job_paper_height|default:700 }}px;">
+    <div class="job-detail-main">
+        <div class="card shadow-sm mb-4 job-paper" style="--job-paper-background-color: {{ site_settings.job_paper_background_color|default:'#ffffff' }};{% if site_settings and site_settings.job_paper_background_image %} background-image: url('{{ site_settings.job_paper_background_image.url }}');{% endif %}">
+            {% if site_settings and site_settings.job_paper_background_video %}
+                <video class="job-paper-media" autoplay muted loop playsinline aria-hidden="true">
+                    <source src="{{ site_settings.job_paper_background_video.url }}">
+                </video>
+            {% endif %}
+            <div class="card-body p-4">
+                <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div class="d-flex align-items-center">
+                        {% if job.company_logo %}
+                            <img src="{{ job.company_logo.url }}" class="rounded me-3" style="max-width: 70px; max-height: 70px; object-fit: contain;">
+                        {% endif %}
+                        <div>
+                            <h3 class="fw-bold text-primary mb-1">{{ job.title }}</h3>
+                            <h5 class="text-muted"><i class="fa-solid fa-building me-1"></i> {{ job.company_name }}</h5>
+                        </div>
+                    </div>
+                    <a href="{% url 'job_list' %}" class="btn btn-outline-secondary btn-sm text-nowrap" aria-label="Close and return to jobs">
+                        <i class="fa-solid fa-xmark me-1"></i> {% translate "Close" %}
+                    </a>
+                </div>
+
+                <hr>
+
+                <div class="row g-3 my-2 bg-light p-3 rounded">
+                    <div class="col-md-6"><i class="fa-solid fa-location-dot text-danger me-2"></i> <strong>{% translate "Location" %}:</strong> {{ job.location }}</div>
+                    <div class="col-md-6"><i class="fa-solid fa-briefcase text-primary me-2"></i> <strong>{% translate "Job Type" %}:</strong> {{ job.get_job_type_display }}</div>
+                    <div class="col-md-6"><i class="fa-solid fa-layer-group text-info me-2"></i> <strong>{% translate "Experience" %}:</strong> {{ job.get_experience_level_display }}</div>
+                    <div class="col-md-6"><i class="fa-solid fa-users text-warning me-2"></i> <strong>{% translate "Vacancies" %}:</strong> {{ job.vacancies }}</div>
+                    {% if job.salary %}
+                        <div class="col-md-6"><i class="fa-solid fa-money-bill-wave text-success me-2"></i> <strong>{% translate "Salary" %}:</strong> {{ job.salary }}</div>
+                    {% endif %}
+                    <div class="col-md-6"><i class="fa-solid fa-calendar-xmark text-secondary me-2"></i> <strong>{% translate "Application deadline" %}:</strong> {{ job.deadline|date:"M d, Y" }}</div>
+                </div>
+
+                {% if inside_job_ad and not site_settings or inside_job_ad and site_settings.show_advertisements %}
+                    {% include 'jobs/_advertisement.html' with ad=inside_job_ad %}
+                {% endif %}
+
+                <h4 class="fw-bold text-secondary mt-4 mb-3">{% translate "Job Description" %}</h4>
+                <div class="job-description-content border p-3 rounded bg-white">
+                    {{ job.translated_description|sanitize_html }}
+                </div>
+
+                <div class="mt-4 text-center">
+                    {% if job.apply_link %}
+                        <a href="{{ job.apply_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
+                            <i class="fa-solid fa-paper-plane me-2"></i>{% translate "Apply Now" %}
+                        </a>
+                    {% endif %}
+                </div>
+
+                {% if after_apply_ad and not site_settings or after_apply_ad and site_settings.show_advertisements %}
+                    {% include 'jobs/_advertisement.html' with ad=after_apply_ad %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="job-detail-sidebar">
+        {% if sidebar_ad and not site_settings or sidebar_ad and site_settings.show_advertisements %}
+            {% include 'jobs/_advertisement.html' with ad=sidebar_ad %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

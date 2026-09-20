@@ -1,0 +1,153 @@
+#
+msgid ""
+msgstr ""
+"Language: fr\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "About"
+msgstr "A propos"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "Privacy Policy"
+msgstr "Politique de confidentialite"
+
+msgid "Terms and Conditions"
+msgstr "Conditions generales"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Send us a message"
+msgstr "Envoyez-nous un message"
+
+msgid "Send message"
+msgstr "Envoyer le message"
+
+msgid "Premium hiring platform"
+msgstr "Plateforme de recrutement premium"
+
+msgid "Find your next opportunity"
+msgstr "Trouvez votre prochaine opportunite"
+
+msgid ""
+"Discover top jobs, connect with employers, and grow your career with a "
+"smarter job search experience."
+msgstr ""
+"Decouvrez les meilleurs emplois, connectez-vous aux employeurs et developpez"
+" votre carriere."
+
+msgid "Active Jobs"
+msgstr "Emplois actifs"
+
+msgid "Employers"
+msgstr "Employeurs"
+
+msgid "Search"
+msgstr "Rechercher"
+
+msgid "Location"
+msgstr "Lieu"
+
+msgid "Job Type"
+msgstr "Type d'emploi"
+
+msgid "Experience"
+msgstr "Experience"
+
+msgid "All"
+msgstr "Tous"
+
+msgid "Featured"
+msgstr "En vedette"
+
+msgid "Urgent"
+msgstr "Urgent"
+
+msgid "Negotiable"
+msgstr "Negotiable"
+
+msgid "View Details"
+msgstr "Voir les details"
+
+msgid "vacancies"
+msgstr "postes"
+
+msgid "views"
+msgstr "vues"
+
+msgid "Deadline"
+msgstr "Date limite"
+
+msgid "No jobs found."
+msgstr "Aucun emploi trouve."
+
+msgid "Please add a new job from the Admin Dashboard."
+msgstr "Ajoutez un nouvel emploi depuis le tableau de bord."
+
+msgid "Featured Jobs"
+msgstr "Emplois en vedette"
+
+msgid "Career Platform"
+msgstr "Plateforme professionnelle"
+
+msgid "Browse Jobs"
+msgstr "Parcourir les emplois"
+
+msgid "View Categories"
+msgstr "Voir les categories"
+
+msgid "Live"
+msgstr "En direct"
+
+msgid "Popular"
+msgstr "Populaire"
+
+msgid "Featured Job Categories"
+msgstr "Categories d emplois en vedette"
+
+msgid "See all categories"
+msgstr "Voir toutes les categories"
+
+msgid "Explore jobs"
+msgstr "Explorer les emplois"
+
+msgid "Open roles"
+msgstr "Postes ouverts"
+
+msgid "Latest Jobs"
+msgstr "Derniers emplois"
+
+msgid "Browse all jobs"
+msgstr "Parcourir tous les emplois"
+
+msgid "View job"
+msgstr "Voir l emploi"
+
+msgid "No job openings available yet."
+msgstr "Aucun poste disponible pour le moment."
+
+msgid "Recent Blog Posts"
+msgstr "Articles recents du blog"
+
+msgid "Read all posts"
+msgstr "Lire tous les articles"
+
+msgid "Read article"
+msgstr "Lire l article"
+
+msgid "Close and return to jobs"
+msgstr "Fermer et revenir aux emplois"
+
+msgid "Kombolcha, Ethiopia"
+msgstr "Kombolcha, Ethiopie"
+
+msgid "Your name"
+msgstr "Votre nom"
+
+msgid "How can we help?"
+msgstr "Comment pouvons-nous vous aider ?"
+
+msgid "Write your message here..."
+msgstr "Ecrivez votre message ici..."

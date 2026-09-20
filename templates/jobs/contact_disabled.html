@@ -1,0 +1,15 @@
+{% extends 'jobs/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="card shadow-sm border-0">
+    <div class="card-body p-4 p-lg-5 text-center">
+        <i class="fa-solid fa-envelope-circle-check text-secondary fs-1 mb-3"></i>
+        <h1 class="h2">{{ page.title }}</h1>
+        <p class="lead mb-0">{% translate "Contact submissions are temporarily unavailable. Please check back later." %}</p>
+        <a href="{% url 'job_list' %}" class="btn btn-outline-secondary mt-3">
+            <i class="fa-solid fa-xmark me-1"></i> {% translate "Close" %}
+        </a>
+    </div>
+</div>
+{% endblock %}

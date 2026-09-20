@@ -1,0 +1,201 @@
+#
+msgid ""
+msgstr ""
+"Language: es\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "About"
+msgstr "Acerca de"
+
+msgid "Contact"
+msgstr "Contacto"
+
+msgid "Privacy Policy"
+msgstr "Politica de privacidad"
+
+msgid "Terms and Conditions"
+msgstr "Terminos y condiciones"
+
+msgid "Close"
+msgstr "Cerrar"
+
+msgid "Send us a message"
+msgstr "Enviarnos un mensaje"
+
+msgid "Send message"
+msgstr "Enviar mensaje"
+
+msgid "Premium hiring platform"
+msgstr "Plataforma premium de empleo"
+
+msgid "Find your next opportunity"
+msgstr "Encuentra tu proxima oportunidad"
+
+msgid ""
+"Discover top jobs, connect with employers, and grow your career with a "
+"smarter job search experience."
+msgstr ""
+"Descubre empleos destacados, conecta con empleadores y desarrolla tu "
+"carrera."
+
+msgid "Active Jobs"
+msgstr "Empleos activos"
+
+msgid "Employers"
+msgstr "Empleadores"
+
+msgid "Search"
+msgstr "Buscar"
+
+msgid "Location"
+msgstr "Ubicacion"
+
+msgid "Job Type"
+msgstr "Tipo de empleo"
+
+msgid "Experience"
+msgstr "Experiencia"
+
+msgid "All"
+msgstr "Todos"
+
+msgid "Featured"
+msgstr "Destacado"
+
+msgid "Urgent"
+msgstr "Urgente"
+
+msgid "Negotiable"
+msgstr "Negociable"
+
+msgid "View Details"
+msgstr "Ver detalles"
+
+msgid "vacancies"
+msgstr "vacantes"
+
+msgid "views"
+msgstr "vistas"
+
+msgid "Deadline"
+msgstr "Fecha limite"
+
+msgid "No jobs found."
+msgstr "No se encontraron empleos."
+
+msgid "Please add a new job from the Admin Dashboard."
+msgstr "Agrega un nuevo empleo desde el panel de administracion."
+
+msgid "Featured Jobs"
+msgstr "Empleos destacados"
+
+msgid "Title, company or category"
+msgstr "Titulo, empresa o categoria"
+
+msgid "City or country"
+msgstr "Ciudad o pais"
+
+msgid "Full-time"
+msgstr "Tiempo completo"
+
+msgid "Part-time"
+msgstr "Medio tiempo"
+
+msgid "Remote"
+msgstr "Remoto"
+
+msgid "Contract"
+msgstr "Contrato"
+
+msgid "Internship"
+msgstr "Pasantia"
+
+msgid "Fresh Graduate"
+msgstr "Recién graduado"
+
+msgid "1-3 Years"
+msgstr "1-3 años"
+
+msgid "3-5 Years"
+msgstr "3-5 años"
+
+msgid "5+ Years"
+msgstr "Más de 5 años"
+
+msgid "Vacancies"
+msgstr "Vacantes"
+
+msgid "Salary"
+msgstr "Salario"
+
+msgid "Application deadline"
+msgstr "Fecha límite de solicitud"
+
+msgid "Job Description"
+msgstr "Descripción del empleo"
+
+msgid "Apply Now"
+msgstr "Aplicar ahora"
+
+msgid "Career Platform"
+msgstr "Plataforma profesional"
+
+msgid "Browse Jobs"
+msgstr "Explorar empleos"
+
+msgid "View Categories"
+msgstr "Ver categorias"
+
+msgid "Live"
+msgstr "En vivo"
+
+msgid "Popular"
+msgstr "Popular"
+
+msgid "Featured Job Categories"
+msgstr "Categorias de empleo destacadas"
+
+msgid "See all categories"
+msgstr "Ver todas las categorias"
+
+msgid "Explore jobs"
+msgstr "Explorar empleos"
+
+msgid "Open roles"
+msgstr "Puestos abiertos"
+
+msgid "Latest Jobs"
+msgstr "Ultimos empleos"
+
+msgid "Browse all jobs"
+msgstr "Explorar todos los empleos"
+
+msgid "View job"
+msgstr "Ver empleo"
+
+msgid "No job openings available yet."
+msgstr "Aun no hay ofertas de empleo."
+
+msgid "Recent Blog Posts"
+msgstr "Publicaciones recientes del blog"
+
+msgid "Read all posts"
+msgstr "Leer todas las publicaciones"
+
+msgid "Read article"
+msgstr "Leer articulo"
+
+msgid "Close and return to jobs"
+msgstr "Cerrar y volver a empleos"
+
+msgid "Kombolcha, Ethiopia"
+msgstr "Kombolcha, Etiopia"
+
+msgid "Your name"
+msgstr "Tu nombre"
+
+msgid "How can we help?"
+msgstr "Como podemos ayudarte?"
+
+msgid "Write your message here..."
+msgstr "Escribe tu mensaje aqui..."

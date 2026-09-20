@@ -1,0 +1,151 @@
+#
+msgid ""
+msgstr ""
+"Language: aa\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "About"
+msgstr "Baaxoh"
+
+msgid "Contact"
+msgstr "Qokol"
+
+msgid "Privacy Policy"
+msgstr "Duuqah sirri"
+
+msgid "Terms and Conditions"
+msgstr "Shuruut kee xiqta"
+
+msgid "Close"
+msgstr "Culsa"
+
+msgid "Send us a message"
+msgstr "Nanu fanah farriima rub"
+
+msgid "Send message"
+msgstr "Farriima rub"
+
+msgid "Premium hiring platform"
+msgstr "Macaayih dooro madqa"
+
+msgid "Find your next opportunity"
+msgstr "Ku qokolih fursat gey"
+
+msgid ""
+"Discover top jobs, connect with employers, and grow your career with a "
+"smarter job search experience."
+msgstr "Macaayih xayyoh gey, abtoh abaanah gex, ku shaqaalih gurral abe."
+
+msgid "Active Jobs"
+msgstr "Amolladih macaay"
+
+msgid "Employers"
+msgstr "Abaanah"
+
+msgid "Search"
+msgstr "Gey"
+
+msgid "Location"
+msgstr "Gexso"
+
+msgid "Job Type"
+msgstr "Macaayih nooca"
+
+msgid "Experience"
+msgstr "Tajriba"
+
+msgid "All"
+msgstr "Kulli"
+
+msgid "Featured"
+msgstr "Doorimte"
+
+msgid "Urgent"
+msgstr "Degdeg"
+
+msgid "Negotiable"
+msgstr "Gaba kalam"
+
+msgid "View Details"
+msgstr "Faayida gey"
+
+msgid "vacancies"
+msgstr "Macaayih boos"
+
+msgid "views"
+msgstr "Geyto"
+
+msgid "Deadline"
+msgstr "Waqdi xayyo"
+
+msgid "No jobs found."
+msgstr "Macaayik geytimak yanim."
+
+msgid "Please add a new job from the Admin Dashboard."
+msgstr "Fadgi, admin dashboard fanah macaayih ku dar."
+
+msgid "Featured Jobs"
+msgstr "Doorimte macaay"
+
+msgid "Career Platform"
+msgstr "Macaayih madqa"
+
+msgid "Browse Jobs"
+msgstr "Macaayit gey"
+
+msgid "View Categories"
+msgstr "Qimboh gey"
+
+msgid "Live"
+msgstr "Diiqah"
+
+msgid "Popular"
+msgstr "Yayse"
+
+msgid "Featured Job Categories"
+msgstr "Doorimte macaayih qimbo"
+
+msgid "See all categories"
+msgstr "Qimbo kulli gey"
+
+msgid "Explore jobs"
+msgstr "Macaayit gey"
+
+msgid "Open roles"
+msgstr "Macaayih fursat"
+
+msgid "Latest Jobs"
+msgstr "Macaayih xayyoh"
+
+msgid "Browse all jobs"
+msgstr "Macaayit kulli gey"
+
+msgid "View job"
+msgstr "Macaayih geyto"
+
+msgid "No job openings available yet."
+msgstr "Macaayih fursat elle yan maay"
+
+msgid "Recent Blog Posts"
+msgstr "Blogih xayyoh qangara"
+
+msgid "Read all posts"
+msgstr "Qangara kulli akri"
+
+msgid "Read article"
+msgstr "Qangara akri"
+
+msgid "Close and return to jobs"
+msgstr "Culsa kee macaay fanah rac"
+
+msgid "Kombolcha, Ethiopia"
+msgstr "Kombolcha, Itoobiya"
+
+msgid "Your name"
+msgstr "Ku migaaqa"
+
+msgid "How can we help?"
+msgstr "Nanu ku caagid mannal abna?"
+
+msgid "Write your message here..."
+msgstr "Ku farriima siinih ruub..."
