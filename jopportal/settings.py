@@ -33,11 +33,7 @@ elif not debug_setting or DEBUG:
 else:
     raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is False.')
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
-    if host.strip()
-]
+ALLOWED_HOSTS = ['my-project-njlw.onrender.com', 'localhost', '127.0.0.1']
 
 LANGUAGE_CODE = 'en'
 
