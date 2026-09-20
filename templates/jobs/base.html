@@ -60,7 +60,7 @@
 
         .navbar .nav-link {
             background-color: transparent !important;
-            border: 1px solid #fff !important;
+            border: 1px solid rgba(255,255,255,0.35) !important;
             color: #fff !important;
             padding: 8px 16px !important;
             border-radius: 4px !important;
@@ -71,6 +71,19 @@
         .navbar .nav-link:hover {
             background-color: #fff !important;
             color: #000 !important;
+        }
+
+        .navbar-collapse {
+            justify-content: space-between;
+        }
+
+        .navbar-toggler {
+            border-color: rgba(255,255,255,0.35);
+            padding: 0.35rem 0.6rem;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.15);
         }
 
         .navbar-brand img { max-height: 38px; }
@@ -404,6 +417,23 @@
             }
         }
 
+        @media (max-width: 991.98px) {
+            .navbar .nav-link {
+                margin-right: 0 !important;
+                width: 100%;
+                text-align: center;
+            }
+
+            .navbar-collapse {
+                padding-top: 0.75rem;
+            }
+
+            .navbar-nav,
+            .navbar .d-flex {
+                width: 100%;
+            }
+        }
+
         @media (max-width: 576px) {
             .navbar .container {
                 padding-left: 12px;
@@ -460,52 +490,59 @@
                 </span>
             </a>
 
-            <div class="d-flex align-items-center gap-3 ms-auto">
-                <div class="d-flex align-items-center gap-3 small">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <div class="navbar-nav me-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-2 small">
                     <a href="{% url 'home' %}" class="nav-link">{% translate "Home" %}</a>
                     <a href="{% url 'category_list' %}" class="nav-link">{% translate "Job Categories" %}</a>
                     <a href="{% url 'blog_list' %}" class="nav-link">{% translate "Blog" %}</a>
                 </div>
-                {% if not site_settings or site_settings.show_about_contact_links %}
-                    <div class="d-flex align-items-center gap-2 small">
-                        {% if request.path != '/contact-us/' and request.path != '/contact-us/message/' %}
-                            <a href="{% url 'about_us' %}" class="btn btn-sm btn-outline-light px-2" data-page="about">{% translate "About" %}</a>
-                        {% endif %}
-                        {% if not contact_page or contact_page.contact_enabled %}
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-outline-light dropdown-toggle px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa-solid fa-address-book me-1"></i>{% translate "Contact" %}
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{% url 'contact_us' %}">{% translate "Contact us" %}</a></li>
-                                    {% if not site_settings or site_settings.contact_submit_enabled %}
-                                        {% if request.path != '/about-us/' and request.path != '/contact-us/' and request.path != '/contact-us/message/' %}
-                                            <li><a class="dropdown-item" href="{% url 'contact_message' %}">{% translate "Send us a message" %}</a></li>
-                                        {% endif %}
-                                    {% endif %}
-                                </ul>
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endif %}
-                {% for page in custom_header_pages %}
-                    <a href="{% url 'custom_page' page.slug %}" class="btn btn-sm btn-outline-light px-2">{{ page.title }}</a>
-                {% endfor %}
-                {% for page in legal_header_pages %}
-                    <a href="{% url 'custom_page' page.page_type %}" class="btn btn-sm btn-outline-light px-2">{{ page.title }}</a>
-                {% endfor %}
-                {% if not site_settings or site_settings.show_language_switcher %}
-                <form action="{% url 'set_language' %}" method="post" class="d-inline">
-                    {% csrf_token %}
-                    <input name="next" type="hidden" value="{{ request.get_full_path }}">
-                    <select name="language" class="form-select form-select-sm glass-select" onchange="switchFrontendLanguage(this)">
-                        {% for code, name in frontend_languages %}
-                            <option value="{{ code }}" {% if code == LANGUAGE_CODE %}selected{% endif %}>{{ name }}</option>
-                        {% endfor %}
-                    </select>
-                </form>
-                {% endif %}
 
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 ms-lg-auto small">
+                    {% if not site_settings or site_settings.show_about_contact_links %}
+                        <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2">
+                            {% if request.path != '/contact-us/' and request.path != '/contact-us/message/' %}
+                                <a href="{% url 'about_us' %}" class="btn btn-sm btn-outline-light px-2" data-page="about">{% translate "About" %}</a>
+                            {% endif %}
+                            {% if not contact_page or contact_page.contact_enabled %}
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-light dropdown-toggle px-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fa-solid fa-address-book me-1"></i>{% translate "Contact" %}
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'contact_us' %}">{% translate "Contact us" %}</a></li>
+                                        {% if not site_settings or site_settings.contact_submit_enabled %}
+                                            {% if request.path != '/about-us/' and request.path != '/contact-us/' and request.path != '/contact-us/message/' %}
+                                                <li><a class="dropdown-item" href="{% url 'contact_message' %}">{% translate "Send us a message" %}</a></li>
+                                            {% endif %}
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    {% for page in custom_header_pages %}
+                        <a href="{% url 'custom_page' page.slug %}" class="btn btn-sm btn-outline-light px-2">{{ page.title }}</a>
+                    {% endfor %}
+                    {% for page in legal_header_pages %}
+                        <a href="{% url 'custom_page' page.page_type %}" class="btn btn-sm btn-outline-light px-2">{{ page.title }}</a>
+                    {% endfor %}
+                    {% if not site_settings or site_settings.show_language_switcher %}
+                    <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                        {% csrf_token %}
+                        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                        <select name="language" class="form-select form-select-sm glass-select" onchange="switchFrontendLanguage(this)">
+                            {% for code, name in frontend_languages %}
+                                <option value="{{ code }}" {% if code == LANGUAGE_CODE %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>
@@ -516,7 +553,7 @@
         </div>
     {% endif %}
 
-    <main class="container my-4 flex-grow-1 position-relative" style="padding-top: 40px; z-index: 1;">
+    <main class="container my-4 flex-grow-1 position-relative" style="padding-top: 110px; z-index: 1;">
         {% block content %}{% endblock %}
     </main>
 
