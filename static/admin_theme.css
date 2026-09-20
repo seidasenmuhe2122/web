@@ -371,13 +371,24 @@ body > #jazzy-sidebar {
 
     .main-sidebar,
     .app-sidebar {
-        display: none !important;
         width: 0 !important;
         min-width: 0 !important;
         max-width: 0 !important;
         overflow: hidden !important;
         border-right: 0 !important;
         box-shadow: none !important;
+        transform: translateX(-100%) !important;
+        transition: transform 0.2s ease, width 0.2s ease !important;
+    }
+
+    body.sidebar-open .main-sidebar,
+    body.sidebar-open .app-sidebar,
+    .sidebar-open .main-sidebar,
+    .sidebar-open .app-sidebar {
+        width: 260px !important;
+        min-width: 260px !important;
+        max-width: 260px !important;
+        transform: translateX(0) !important;
     }
 
     .main-sidebar .nav-link,
