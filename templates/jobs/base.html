@@ -73,6 +73,132 @@
             color: #000 !important;
         }
 
+        .frontend-theme-toggle {
+            align-items: center;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 4px;
+            color: #fff;
+            display: inline-flex;
+            gap: 0.4rem;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0.35rem 0.65rem;
+            transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .frontend-theme-toggle:hover,
+        .frontend-theme-toggle:focus-visible {
+            background: #fff;
+            border-color: #fff;
+            color: #071421;
+            outline: 0;
+        }
+
+        html[data-ui-theme="light"] body {
+            --bg-1: #f5f8fb;
+            --bg-2: #e4edf4;
+            --text: #193042;
+            --muted: #536d7d;
+            --primary: #087ea4;
+            --secondary: #2865a3;
+            --glass: rgba(255,255,255,0.82);
+            --glass-border: rgba(25,48,66,0.14);
+            background: linear-gradient(135deg, var(--bg-1), var(--bg-2)) !important;
+            color: var(--text) !important;
+        }
+
+        html[data-ui-theme="light"] .navbar {
+            background: rgba(255,255,255,0.92) !important;
+            border-bottom-color: rgba(25,48,66,0.14);
+        }
+
+        html[data-ui-theme="light"] .navbar .navbar-brand,
+        html[data-ui-theme="light"] .navbar .nav-link {
+            color: #193042 !important;
+        }
+
+        html[data-ui-theme="light"] .navbar .nav-link {
+            border-color: rgba(25,48,66,0.22) !important;
+        }
+
+        html[data-ui-theme="light"] .navbar .nav-link:hover {
+            background-color: #193042 !important;
+            color: #fff !important;
+        }
+
+        html[data-ui-theme="light"] .navbar-toggler {
+            border-color: rgba(25,48,66,0.28);
+        }
+
+        html[data-ui-theme="light"] .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        html[data-ui-theme="light"] .frontend-theme-toggle {
+            background: #193042;
+            border-color: #193042;
+            color: #fff;
+        }
+
+        html[data-ui-theme="light"] .glass-panel,
+        html[data-ui-theme="light"] .search-panel,
+        html[data-ui-theme="light"] .job-card {
+            background: rgba(255,255,255,0.86) !important;
+            border-color: rgba(25,48,66,0.14) !important;
+            box-shadow: 0 15px 35px rgba(45,75,95,0.12);
+            color: var(--text) !important;
+        }
+
+        html[data-ui-theme="light"] .glass-select,
+        html[data-ui-theme="light"] .form-control,
+        html[data-ui-theme="light"] .form-select {
+            background-color: #fff !important;
+            border-color: #b9cbd6 !important;
+            color: var(--text) !important;
+        }
+
+        html[data-ui-theme="light"] .glass-select option,
+        html[data-ui-theme="light"] .form-select option {
+            background: #fff;
+            color: var(--text);
+        }
+
+        html[data-ui-theme="light"] .text-white,
+        html[data-ui-theme="light"] .text-light,
+        html[data-ui-theme="light"] .text-white-50,
+        html[data-ui-theme="light"] .text-light-emphasis {
+            color: var(--text) !important;
+        }
+
+        html[data-ui-theme="light"] .dropdown-menu {
+            background: #fff;
+            border-color: #c7d7e0;
+        }
+
+        html[data-ui-theme="light"] .dropdown-item {
+            color: var(--text);
+        }
+
+        html[data-ui-theme="light"] .dropdown-item:hover {
+            background: #eaf3f7;
+            color: #087ea4;
+        }
+
+        html[data-ui-theme="light"] .ad-container {
+            background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(231,241,247,0.95));
+            border-color: rgba(25,48,66,0.14);
+        }
+
+        html[data-ui-theme="light"] footer.bg-dark {
+            background: #193042 !important;
+        }
+
+        html[data-ui-theme="light"] .previous-job-paper,
+        html[data-ui-theme="light"] .job-paper {
+            color: #1f2937 !important;
+        }
+
         .navbar-collapse {
             justify-content: space-between;
         }
@@ -542,6 +668,9 @@
                         </select>
                     </form>
                     {% endif %}
+                    <button type="button" class="frontend-theme-toggle" data-frontend-theme-toggle aria-pressed="false" title="Switch to bright mode">
+                        <i class="fa-solid fa-sun" aria-hidden="true"></i><span data-frontend-theme-label>Bright</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -593,6 +722,32 @@
             document.documentElement.style.setProperty('--corner-radius', site.siteRadius + 'px');
             if (site.siteBackgroundImage) {
                 document.documentElement.style.setProperty('--site-background-image', 'url("' + site.siteBackgroundImage + '")');
+            }
+
+            var themeKey = 'afri-job-frontend-theme';
+            var themeToggle = document.querySelector('[data-frontend-theme-toggle]');
+            var savedTheme = window.localStorage.getItem(themeKey);
+            var selectedTheme = savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark';
+
+            function applyFrontendTheme(theme) {
+                selectedTheme = theme === 'light' ? 'light' : 'dark';
+                document.documentElement.dataset.uiTheme = selectedTheme;
+                if (themeToggle) {
+                    var label = themeToggle.querySelector('[data-frontend-theme-label]');
+                    var icon = themeToggle.querySelector('i');
+                    themeToggle.setAttribute('aria-pressed', selectedTheme === 'light' ? 'true' : 'false');
+                    themeToggle.title = selectedTheme === 'light' ? 'Switch to dark mode' : 'Switch to bright mode';
+                    label.textContent = selectedTheme === 'light' ? 'Dark' : 'Bright';
+                    icon.className = selectedTheme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+                }
+                window.localStorage.setItem(themeKey, selectedTheme);
+            }
+
+            applyFrontendTheme(selectedTheme);
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function () {
+                    applyFrontendTheme(selectedTheme === 'light' ? 'dark' : 'light');
+                });
             }
 
             if (typeof VanillaTilt !== 'undefined') {
