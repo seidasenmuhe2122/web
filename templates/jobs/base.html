@@ -1,6 +1,6 @@
 {% load i18n security_tags %}
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}">
+<html lang="{{ LANGUAGE_CODE }}" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -85,6 +85,14 @@
             min-height: 34px;
             padding: 0.35rem 0.65rem;
             transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .frontend-theme-toggle i,
+        .frontend-theme-toggle [data-frontend-theme-label] {
+            color: inherit !important;
+            display: inline-block;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         .frontend-theme-toggle:hover,
@@ -201,6 +209,35 @@
 
         .navbar-collapse {
             justify-content: space-between;
+        }
+
+        .navbar > .container > .navbar-toggler {
+            margin-left: auto;
+            order: 2;
+        }
+
+        .navbar > .container > .navbar-collapse {
+            order: 4;
+        }
+
+        .navbar > .container > .frontend-theme-toggle {
+            margin-left: 0.5rem;
+            order: 3;
+        }
+
+        @media (min-width: 992px) {
+            .navbar > .container > .navbar-toggler {
+                margin-left: 0;
+            }
+
+            .navbar > .container > .navbar-collapse {
+                order: 2;
+            }
+
+            .navbar > .container > .frontend-theme-toggle {
+                margin-left: 0.75rem;
+                order: 3;
+            }
         }
 
         .navbar-toggler {
@@ -668,11 +705,12 @@
                         </select>
                     </form>
                     {% endif %}
-                    <button type="button" class="frontend-theme-toggle" data-frontend-theme-toggle aria-pressed="false" title="Switch to bright mode">
-                        <i class="fa-solid fa-sun" aria-hidden="true"></i><span data-frontend-theme-label>Bright</span>
-                    </button>
                 </div>
             </div>
+
+            <button type="button" class="frontend-theme-toggle" data-frontend-theme-toggle aria-pressed="false" title="Switch to bright mode">
+                <i class="fa-solid fa-sun" aria-hidden="true"></i><span data-frontend-theme-label>Bright</span>
+            </button>
         </div>
     </nav>
 
@@ -731,6 +769,7 @@
 
             function applyFrontendTheme(theme) {
                 selectedTheme = theme === 'light' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = selectedTheme;
                 document.documentElement.dataset.uiTheme = selectedTheme;
                 if (themeToggle) {
                     var label = themeToggle.querySelector('[data-frontend-theme-label]');
