@@ -36,7 +36,7 @@ else:
 ALLOWED_HOSTS = [
     'afrijob.world',
     'www.afrijob.world',
-    'my-project-nj1w.onrender.com',
+    'my-project-njlw.onrender.com',
     'localhost',
     '127.0.0.1',
 ]
