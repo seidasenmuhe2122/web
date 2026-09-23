@@ -33,8 +33,6 @@ elif not debug_setting or DEBUG:
 else:
     raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is False.')
 
-ALLOWED_HOSTS = ['.onrender.com', 'localhost', '127.0.0.1']
-ALLOWED_HOSTS = ['my-project-njlw.onrender.com', 'localhost', '127.0.0.1']
 ALLOWED_HOSTS = [
     'afrijob.world',
     'www.afrijob.world',
