@@ -14,9 +14,12 @@ from .models import BlogPost, Job, JobCategory, Advertisement, CustomPage, Legal
 def admin_theme_config(request):
     site_settings = SiteSetting.objects.first()
     response = JsonResponse({
-        'sidebar_color': site_settings.admin_sidebar_color if site_settings else '#20252d',
-        'accent_color': site_settings.admin_accent_color if site_settings else '#dbeafe',
-        'workspace_color': site_settings.admin_workspace_color if site_settings else '#f7f8fa',
+        'sidebar_color': site_settings.admin_sidebar_color if site_settings else '#070b16',
+        'accent_color': site_settings.admin_accent_color if site_settings else '#22d3ee',
+        'workspace_color': site_settings.admin_workspace_color if site_settings else '#0b1120',
+        'primary_color': site_settings.admin_primary_color if site_settings else '#38bdf8',
+        'secondary_color': site_settings.admin_secondary_color if site_settings else '#a855f7',
+        'text_color': site_settings.admin_text_color if site_settings else '#e0f2fe',
         'background_mode': site_settings.admin_background_mode if site_settings else 'image',
         'background_image': site_settings.admin_background_image.url if site_settings and site_settings.admin_background_image else '',
         'background_video': site_settings.admin_background_video.url if site_settings and site_settings.admin_background_video else '',

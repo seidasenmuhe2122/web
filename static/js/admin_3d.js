@@ -96,7 +96,11 @@
         setThemeProperty('--admin-bg', config.workspace_color);
         setThemeProperty('--admin-sidebar', config.sidebar_color);
         setThemeProperty('--admin-cyan', config.accent_color);
-        setThemeProperty('--admin-blue', config.accent_color);
+        setThemeProperty('--admin-blue', config.primary_color);
+        setThemeProperty('--admin-primary', config.primary_color);
+        setThemeProperty('--admin-secondary', config.secondary_color);
+        setThemeProperty('--admin-purple', config.secondary_color);
+        setThemeProperty('--admin-text', config.text_color);
         setThemeProperty('--admin-charcoal', config.sidebar_color);
         setThemeProperty('--admin-pastel-blue', config.accent_color);
         setThemeProperty('--admin-workspace', config.workspace_color);

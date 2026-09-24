@@ -10,7 +10,7 @@
                     <source src="{{ ad.video_url }}">
                 </video>
             {% elif ad.effective_format == 'html' and ad.adsense_code %}
-                {{ ad.adsense_code|safe }}
+                {{ ad.adsense_code|sanitize_ad_code }}
             {% elif ad.banner_image %}
                 <a href="{% url 'advertisement_click' ad.id %}" target="_blank" rel="noopener noreferrer">
                     <img src="{{ ad.banner_image.url }}" class="img-fluid rounded" alt="{{ ad.title }}">

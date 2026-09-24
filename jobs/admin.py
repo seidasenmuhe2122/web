@@ -270,7 +270,8 @@ class SiteSettingAdmin(admin.ModelAdmin):
         }),
         ('Dashboard customization', {
             'fields': (
-                'admin_sidebar_color', 'admin_accent_color', 'admin_workspace_color',
+                'admin_sidebar_color', 'admin_workspace_color', 'admin_primary_color',
+                'admin_secondary_color', 'admin_accent_color', 'admin_text_color',
                 'admin_background_mode', 'admin_background_image', 'admin_background_video',
                 'admin_background_3d', 'admin_background_4k',
                 'job_paper_width', 'job_paper_height', 'job_paper_background_color',

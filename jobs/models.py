@@ -263,43 +263,61 @@ class SiteSetting(models.Model):
     job_display_mode = models.CharField(max_length=10, choices=JOB_DISPLAY_MODE_CHOICES, default='work')
     primary_color = models.CharField(
         max_length=7,
-        default='#63d9ff',
+        default='#38bdf8',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
     )
     secondary_color = models.CharField(
         max_length=7,
-        default='#8b5cf6',
+        default='#a855f7',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
     )
     background_color = models.CharField(
         max_length=7,
-        default='#071421',
+        default='#070b16',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
     )
     text_color = models.CharField(
         max_length=7,
-        default='#edf6ff',
+        default='#e0f2fe',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
     )
     font_family = models.CharField(max_length=120, default='Segoe UI, Tahoma, sans-serif')
     corner_radius = models.PositiveSmallIntegerField(default=24, validators=[MinValueValidator(0), MaxValueValidator(40)])
     admin_sidebar_color = models.CharField(
         max_length=7,
-        default='#20252d',
+        default='#070b16',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
         verbose_name='Admin sidebar color',
     )
     admin_accent_color = models.CharField(
         max_length=7,
-        default='#dbeafe',
+        default='#22d3ee',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
         verbose_name='Admin accent color',
     )
     admin_workspace_color = models.CharField(
         max_length=7,
-        default='#e7ecf1',
+        default='#0b1120',
         validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
         verbose_name='Admin workspace color',
+    )
+    admin_primary_color = models.CharField(
+        max_length=7,
+        default='#38bdf8',
+        validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
+        verbose_name='Admin primary color',
+    )
+    admin_secondary_color = models.CharField(
+        max_length=7,
+        default='#a855f7',
+        validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
+        verbose_name='Admin secondary color',
+    )
+    admin_text_color = models.CharField(
+        max_length=7,
+        default='#e0f2fe',
+        validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')],
+        verbose_name='Admin text color',
     )
     admin_background_image = models.ImageField(upload_to='admin/backgrounds/', blank=True, null=True, verbose_name='Admin background image')
     admin_background_video = models.FileField(

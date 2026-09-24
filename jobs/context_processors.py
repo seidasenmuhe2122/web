@@ -1,4 +1,5 @@
 from django.db.models import Count, Q
+from django.conf import settings
 from django.templatetags.i18n import GetAvailableLanguagesNode
 from django.utils import translation
 
@@ -27,7 +28,9 @@ _original_language_render = GetAvailableLanguagesNode.render
 def _admin_aware_language_render(node, context):
     request = context.get('request')
     path = getattr(request, 'path_info', '')
-    if path.startswith('/admin/') or path.startswith('/am/admin/') or path.startswith('/ar/admin/'):
+    admin_path = f'/{settings.ADMIN_URL.strip("/")}'
+    localized_admin_paths = (admin_path, *(f'/{code}{admin_path}' for code in ('am', 'ar')))
+    if any(path == admin_prefix or path.startswith(f'{admin_prefix}/') for admin_prefix in localized_admin_paths):
         context[node.variable] = [
             (code, translation.gettext(name)) for code, name in ADMIN_LANGUAGES
         ]

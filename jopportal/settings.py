@@ -11,32 +11,46 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import re
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+configured_admin_url = os.environ.get('DJANGO_ADMIN_URL', 'secure-console-7f3a91').strip().strip('/')
+if not re.fullmatch(r'[A-Za-z0-9_-]{8,80}', configured_admin_url):
+    raise ImproperlyConfigured(
+        'DJANGO_ADMIN_URL must contain 8-80 letters, numbers, underscores, or hyphens.'
+    )
+ADMIN_URL = f'{configured_admin_url}/'
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
-debug_setting = os.environ.get('DJANGO_DEBUG')
-DEBUG = (debug_setting or 'True').lower() in {'1', 'true', 'yes'}
+deployment_environment = os.environ.get('DJANGO_ENV', 'development').strip().lower()
+debug_setting = os.environ.get('DJANGO_DEBUG', '').strip().lower()
+production_environment = deployment_environment in {'production', 'prod'}
+DEBUG = (
+    False
+    if production_environment
+    else debug_setting in {'1', 'true', 'yes', 'on'}
+    if debug_setting
+    else True
+)
 
-configured_secret_key = os.environ.get('DJANGO_SECRET_KEY', '').strip()
-if configured_secret_key:
-    SECRET_KEY = configured_secret_key
-elif not debug_setting or DEBUG:
-    SECRET_KEY = 'django-insecure-local-development-key-change-me'
-else:
-    raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is False.')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '').strip()
+if not SECRET_KEY:
+    raise ImproperlyConfigured(
+        'DJANGO_SECRET_KEY must be set to a strong, private value in the environment.'
+    )
 
 ALLOWED_HOSTS = [
+    'web-auir.onrender.com',
     'afrijob.world',
     'www.afrijob.world',
-    'my-project-njlw.onrender.com',
     'localhost',
     '127.0.0.1',
 ]
@@ -101,7 +115,9 @@ CKEDITOR_ALLOW_NONIMAGE_FILES = False
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'jopportal.middleware.SecurityHeadersMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'jopportal.middleware.RateLimitMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -110,6 +126,34 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Limits are intentionally configurable so production deployments can tune them
+# without changing application code. Use a shared cache backend across workers.
+RATE_LIMITS = {
+    'admin_login': {'limit': 10, 'window': 300},
+    'contact': {'limit': 5, 'window': 600},
+    'search': {'limit': 60, 'window': 60},
+    'api': {'limit': 60, 'window': 60},
+    'upload': {'limit': 20, 'window': 60},
+    'account': {'limit': 10, 'window': 300},
+}
+RATE_LIMIT_TRUST_X_FORWARDED_FOR = os.environ.get(
+    'DJANGO_RATE_LIMIT_TRUST_X_FORWARDED_FOR', 'False'
+).lower() in {'1', 'true', 'yes'}
+AUTH_LOGIN_FAILURE_LIMIT = int(os.environ.get('DJANGO_AUTH_LOGIN_FAILURE_LIMIT', '5'))
+AUTH_LOGIN_FAILURE_WINDOW = int(os.environ.get('DJANGO_AUTH_LOGIN_FAILURE_WINDOW', '900'))
+AUTH_LOGIN_BLOCK_DURATION = int(os.environ.get('DJANGO_AUTH_LOGIN_BLOCK_DURATION', '900'))
+cache_location = os.environ.get('DJANGO_CACHE_URL', '').strip()
+CACHES = {
+    'default': {
+        'BACKEND': (
+            'django.core.cache.backends.redis.RedisCache'
+            if cache_location
+            else 'django.core.cache.backends.locmem.LocMemCache'
+        ),
+        'LOCATION': cache_location or 'jopportal-rate-limit',
+    },
+}
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()
@@ -126,7 +170,19 @@ SECURE_COOKIES = os.environ.get('DJANGO_SECURE_COOKIES', 'False').lower() in {'1
 SESSION_COOKIE_SECURE = SECURE_COOKIES
 CSRF_COOKIE_SECURE = SECURE_COOKIES
 SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
 SECURE_CONTENT_TYPE_NOSNIFF = True
+CONTENT_SECURITY_POLICY = (
+    "default-src 'self'; "
+    "base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; "
+    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://pagead2.googlesyndication.com "
+    "https://googleads.g.doubleclick.net; "
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+    "img-src 'self' data: blob: https:; font-src 'self' data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; "
+    "media-src 'self' https:; frame-src 'self' https://googleads.g.doubleclick.net; connect-src 'self'"
+)
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0'))
@@ -178,6 +234,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 12},
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',

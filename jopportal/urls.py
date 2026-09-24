@@ -9,6 +9,7 @@ from jobs import views as job_views
 
 
 LANGUAGE_CODES = {code for code, _ in settings.LANGUAGES}
+ADMIN_PATH = f'/{settings.ADMIN_URL.strip("/")}'
 
 
 def _strip_locale_prefix(path):
@@ -42,24 +43,16 @@ def _build_language_redirect(path, language):
             target = f'{target}?{query}'
         return target
 
-    if raw_path.startswith('/admin'):
-        admin_path = raw_path.rstrip('/') or '/admin'
+    localized_admin_paths = (ADMIN_PATH, *(f'/{code}{ADMIN_PATH}' for code in LANGUAGE_CODES))
+    if any(raw_path == path or raw_path.startswith(f'{path}/') for path in localized_admin_paths):
+        admin_path = raw_path.rstrip('/') or ADMIN_PATH
         pieces = admin_path.split('/')
         if len(pieces) > 2 and pieces[1] in LANGUAGE_CODES:
-            admin_path = '/' + '/'.join(pieces[2:]) if len(pieces) > 2 else '/admin'
-        if not admin_path.startswith('/admin'):
-            admin_path = '/admin' + ('' if admin_path == '/' else admin_path)
+            admin_path = '/' + '/'.join(pieces[2:])
         if language == settings.LANGUAGE_CODE:
-            target = '/admin/' if admin_path in {'/admin', '/admin/'} else admin_path
+            target = admin_path
         else:
-            if admin_path in {'/admin', '/admin/'}:
-                target = f'/{language}/admin/'
-            elif admin_path.startswith('/admin'):
-                target = f'/{language}{admin_path}'
-            else:
-                target = f'/{language}/admin{admin_path}'
-        if target == '/admin':
-            target = '/admin/'
+            target = f'/{language}{admin_path}'
     else:
         normalized = _strip_locale_prefix(raw_path)
         if language == settings.LANGUAGE_CODE:
@@ -95,8 +88,8 @@ urlpatterns = [
 ]
 
 urlpatterns += i18n_patterns(
-    path('admin/theme-config/', job_views.admin_theme_config, name='admin_theme_config'),
-    path('admin/', admin.site.urls),
+    path(f'{settings.ADMIN_URL}theme-config/', job_views.admin_theme_config, name='admin_theme_config'),
+    path(settings.ADMIN_URL, admin.site.urls),
     path('', include('jobs.urls')),
     prefix_default_language=False,
 )

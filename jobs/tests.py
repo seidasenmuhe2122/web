@@ -2,8 +2,11 @@ from django.core import mail
 from django.core.cache import cache
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.contrib.auth.signals import user_login_failed
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.http import HttpResponse
+from django.test import Client, TestCase, override_settings
+from django.test import RequestFactory
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -11,10 +14,51 @@ from django.urls import reverse
 
 from .admin import AdvertisementTextWidget
 from .models import Advertisement, ContactMessage, CustomPage, Job, LegalPage, SiteSetting
-from .templatetags.security_tags import sanitize_html
+from .templatetags.security_tags import sanitize_ad_code, sanitize_html
+from jopportal.middleware import RateLimitMiddleware
 
 
 class SecurityTests(TestCase):
+
+    @override_settings(RATE_LIMITS={'search': {'limit': 2, 'window': 60}})
+    def test_rate_limit_returns_429_after_search_limit(self):
+        middleware = RateLimitMiddleware(lambda request: HttpResponse('ok'))
+        factory = RequestFactory()
+
+        for _ in range(2):
+            request = factory.get('/jobs/?q=django', REMOTE_ADDR='198.51.100.20')
+            self.assertEqual(middleware(request).status_code, 200)
+
+        request = factory.get('/jobs/?q=django', REMOTE_ADDR='198.51.100.20')
+        response = middleware(request)
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response['Retry-After'], '60')
+
+    @override_settings(
+        AUTH_LOGIN_FAILURE_LIMIT=2,
+        AUTH_LOGIN_FAILURE_WINDOW=60,
+        AUTH_LOGIN_BLOCK_DURATION=120,
+    )
+    def test_failed_admin_logins_temporarily_block_ip(self):
+        middleware = RateLimitMiddleware(lambda request: HttpResponse('login handled'))
+        factory = RequestFactory()
+        request = factory.post(f'/{settings.ADMIN_URL}login/', REMOTE_ADDR='198.51.100.21')
+
+        user_login_failed.send(
+            sender=self.__class__,
+            credentials={'username': 'admin'},
+            request=request,
+        )
+        self.assertEqual(middleware(request).status_code, 200)
+
+        user_login_failed.send(
+            sender=self.__class__,
+            credentials={'username': 'admin'},
+            request=request,
+        )
+        response = middleware(request)
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response['Retry-After'], '120')
 
     def test_rich_text_sanitizer_removes_executable_markup(self):
         cleaned = sanitize_html(
@@ -45,6 +89,53 @@ class SecurityTests(TestCase):
         self.assertIn('<img', cleaned)
         self.assertIn('https://example.com/image.jpg', cleaned)
         self.assertIn('max-width: 100%', cleaned)
+
+    def test_ad_code_sanitizer_removes_untrusted_script_markup(self):
+        cleaned = sanitize_ad_code(
+            '<script>alert(1)</script>'
+            '<script src="https://evil.example/script.js"></script>'
+            '<ins class="adsbygoogle" data-ad-client="ca-pub-example"></ins>'
+        )
+
+        self.assertNotIn('<script', cleaned)
+        self.assertIn('adsbygoogle', cleaned)
+
+    def test_security_headers_are_present(self):
+        response = self.client.get('/')
+
+        self.assertIn("default-src 'self'", response['Content-Security-Policy'])
+        self.assertEqual(response['X-XSS-Protection'], '1; mode=block')
+        self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
+
+    @override_settings(
+        SECURE_HSTS_SECONDS=31536000,
+        SECURE_HSTS_INCLUDE_SUBDOMAINS=True,
+        SECURE_HSTS_PRELOAD=True,
+    )
+    def test_hardening_headers_and_cookie_attributes_are_configured(self):
+        response = self.client.get('/', secure=True)
+
+        self.assertEqual(settings.X_FRAME_OPTIONS, 'DENY')
+        self.assertEqual(settings.SECURE_REFERRER_POLICY, 'strict-origin-when-cross-origin')
+        self.assertTrue(settings.SESSION_COOKIE_HTTPONLY)
+        self.assertTrue(settings.CSRF_COOKIE_HTTPONLY)
+        self.assertEqual(settings.SESSION_COOKIE_SAMESITE, 'Lax')
+        self.assertEqual(settings.CSRF_COOKIE_SAMESITE, 'Lax')
+        self.assertIn('max-age=31536000', response['Strict-Transport-Security'])
+
+    def test_contact_post_requires_csrf_token(self):
+        LegalPage.objects.get_or_create(
+            page_type='contact',
+            defaults={'title': 'Contact', 'content': '<p>Contact us.</p>'},
+        )
+        csrf_client = Client(enforce_csrf_checks=True)
+
+        response = csrf_client.post(
+            '/contact-us/message/',
+            {'name': 'Visitor', 'email': 'visitor@example.com', 'subject': 'Hello', 'message': 'Message'},
+        )
+
+        self.assertEqual(response.status_code, 403)
 
     def test_blog_and_category_rich_text_are_sanitized_on_public_pages(self):
         from .models import BlogPost, JobCategory
@@ -319,6 +410,9 @@ class LegalPageTests(TestCase):
             admin_sidebar_color='#112233',
             admin_accent_color='#445566',
             admin_workspace_color='#778899',
+            admin_primary_color='#38bdf8',
+            admin_secondary_color='#a855f7',
+            admin_text_color='#e0f2fe',
             admin_background_mode='image',
         )
         user = get_user_model().objects.create_superuser(
@@ -334,6 +428,9 @@ class LegalPageTests(TestCase):
         self.assertEqual(response.json()['sidebar_color'], setting.admin_sidebar_color)
         self.assertEqual(response.json()['accent_color'], setting.admin_accent_color)
         self.assertEqual(response.json()['workspace_color'], setting.admin_workspace_color)
+        self.assertEqual(response.json()['primary_color'], setting.admin_primary_color)
+        self.assertEqual(response.json()['secondary_color'], setting.admin_secondary_color)
+        self.assertEqual(response.json()['text_color'], setting.admin_text_color)
         self.assertEqual(response['Cache-Control'], 'no-store, no-cache, must-revalidate, max-age=0')
 
     def test_admin_background_config_returns_uploaded_image(self):
@@ -633,7 +730,7 @@ class LegalPageTests(TestCase):
         self.assertContains(self.client.get('/pages/support/'), 'Updated Support')
 
     def test_admin_login_page_has_language_switcher(self):
-        response = self.client.get('/admin/login/?next=/admin/')
+        response = self.client.get(reverse('admin:login'))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="language"')
@@ -652,7 +749,7 @@ class LegalPageTests(TestCase):
 
         response = self.client.post(
             reverse('set_language'),
-            {'language': 'am', 'next': '/admin/'},
+            {'language': 'am', 'next': f'/{settings.ADMIN_URL}'},
             follow=True,
         )
 

@@ -12,12 +12,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --bg-1: #071421;
+            --bg-1: #070b16;
             --bg-2: #101b2d;
-            --text: #edf6ff;
+            --text: #e0f2fe;
             --muted: #bfd3ec;
-            --primary: #63d9ff;
-            --secondary: #8b5cf6;
+            --primary: #38bdf8;
+            --secondary: #a855f7;
             --success: #34d399;
             --glass: rgba(255,255,255,0.08);
             --glass-border: rgba(255,255,255,0.12);
@@ -99,7 +99,7 @@
         .frontend-theme-toggle:focus-visible {
             background: #fff;
             border-color: #fff;
-            color: #071421;
+            color: #070b16;
             outline: 0;
         }
 
@@ -554,7 +554,7 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #0ea5e9, #8b5cf6);
+            background: linear-gradient(135deg, #38bdf8, #a855f7);
             border: none;
             box-shadow: 0 12px 30px rgba(59,130,246,0.25);
         }
@@ -624,10 +624,10 @@
     </style>
 </head>
 <body class="d-flex flex-column min-vh-100"
-    data-site-bg="{{ site_settings.background_color|default:'#071421' }}"
-    data-site-text="{{ site_settings.text_color|default:'#edf6ff' }}"
-    data-site-primary="{{ site_settings.primary_color|default:'#63d9ff' }}"
-    data-site-secondary="{{ site_settings.secondary_color|default:'#8b5cf6' }}"
+    data-site-bg="{{ site_settings.background_color|default:'#070b16' }}"
+    data-site-text="{{ site_settings.text_color|default:'#e0f2fe' }}"
+    data-site-primary="{{ site_settings.primary_color|default:'#38bdf8' }}"
+    data-site-secondary="{{ site_settings.secondary_color|default:'#a855f7' }}"
     data-site-font="{{ site_settings.font_family|default:'Segoe UI, Tahoma, sans-serif' }}"
     data-site-radius="{{ site_settings.corner_radius|default:28 }}"
     data-site-background-image="{% if site_settings and site_settings.background_image %}{{ site_settings.background_image.url }}{% endif %}">
