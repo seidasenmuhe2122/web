@@ -48,7 +48,7 @@ if not SECRET_KEY:
     )
 
 ALLOWED_HOSTS = [
-    'web-auir.onrender.com',
+    'web-i4fa.onrender.com',
     'afrijob.world',
     'www.afrijob.world',
     'localhost',
