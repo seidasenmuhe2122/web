@@ -159,7 +159,10 @@ CSRF_TRUSTED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
         'DJANGO_CSRF_TRUSTED_ORIGINS',
-        'http://localhost,http://127.0.0.1,http://testserver,https://localhost,https://127.0.0.1,https://testserver'
+        'http://localhost,http://127.0.0.1,http://testserver,'
+        'https://localhost,https://127.0.0.1,https://testserver,'
+        'https://afrijob.world,https://www.afrijob.world,'
+        'https://web-auir.onrender.com'
     ).split(',')
     if origin.strip()
 ]
