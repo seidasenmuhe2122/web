@@ -1,0 +1,9 @@
+pycache/
+*.py[cod]
+*.pyo
+*.sqlite3
+.env
+.venv/
+venv/
+staticfiles/
+media/
