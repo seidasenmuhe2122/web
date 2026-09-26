@@ -37,7 +37,7 @@
                             {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
                         </div>
                     {% endfor %}
-                    {% if site_settings.contact_submit_enabled %}
+                    {% if not site_settings or site_settings.contact_submit_enabled %}
                         <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane me-2"></i>{% translate "Send message" %}</button>
                     {% endif %}
                 </form>

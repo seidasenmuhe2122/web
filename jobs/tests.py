@@ -861,6 +861,7 @@ class LegalPageTests(TestCase):
         self.assertNotContains(contact_response, 'Write your message here')
         self.assertContains(message_response, 'Send us a message')
         self.assertContains(message_response, 'Write your message here')
+        self.assertContains(message_response, 'Send message')
 
     def test_admin_can_disable_contact_form(self):
         contact_page = LegalPage.objects.get(page_type='contact')
