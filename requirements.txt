@@ -7,3 +7,4 @@ tinycss2==1.4.0
 whitenoise==6.12.0
 gunicorn
 redis>=5.0,<8.0
+dj-database-url
