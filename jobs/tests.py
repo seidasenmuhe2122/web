@@ -107,6 +107,15 @@ class SecurityTests(TestCase):
         self.assertEqual(response['X-XSS-Protection'], '1; mode=block')
         self.assertEqual(response['X-Content-Type-Options'], 'nosniff')
 
+    def test_legacy_admin_url_redirects_to_configured_admin(self):
+        response = self.client.get('/admin/')
+
+        self.assertRedirects(
+            response,
+            f'/{settings.ADMIN_URL}',
+            fetch_redirect_response=False,
+        )
+
     @override_settings(
         SECURE_HSTS_SECONDS=31536000,
         SECURE_HSTS_INCLUDE_SUBDOMAINS=True,

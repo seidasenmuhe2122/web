@@ -14,6 +14,8 @@ DJANGO_CSRF_TRUSTED_ORIGINS=https://example.com,https://www.example.com
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_COOKIES=True
 DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=False
+DJANGO_SECURE_HSTS_PRELOAD=False
 DJANGO_ADVERTISEMENT_ALLOWED_HOSTS=trusted-advertiser.example
 DJANGO_EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 DJANGO_EMAIL_HOST=smtp.gmail.com
@@ -30,6 +32,7 @@ DJANGO_AUTH_LOGIN_BLOCK_DURATION=900
 ```
 
 Use the real application domain in `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, and `DJANGO_ADVERTISEMENT_ALLOWED_HOSTS`.
+When `DJANGO_DEBUG=False`, HTTPS redirection, secure cookies, and one-year HSTS are enabled by default. Ensure HTTPS is active at the host or reverse proxy; only enable HSTS subdomains or preload after confirming every affected hostname supports HTTPS. The corresponding `DJANGO_SECURE_*` variables can explicitly override these defaults.
 
 ## Build and start
 

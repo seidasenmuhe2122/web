@@ -31,15 +31,15 @@ ADMIN_URL = f'{configured_admin_url}/'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 deployment_environment = os.environ.get('DJANGO_ENV', 'development').strip().lower()
-debug_setting = os.environ.get('DJANGO_DEBUG', '').strip().lower()
 production_environment = deployment_environment in {'production', 'prod'}
-DEBUG = (
-    False
-    if production_environment
-    else debug_setting in {'1', 'true', 'yes', 'on'}
-    if debug_setting
-    else True
-)
+TRUE_VALUES = {'1', 'true', 'yes', 'on'}
+
+
+def environment_bool(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in TRUE_VALUES
+
+
+DEBUG = not production_environment and environment_bool('DJANGO_DEBUG', True)
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '').strip()
 if not SECRET_KEY:
@@ -47,13 +47,20 @@ if not SECRET_KEY:
         'DJANGO_SECRET_KEY must be set to a strong, private value in the environment.'
     )
 
-ALLOWED_HOSTS = [
+DEFAULT_ALLOWED_HOSTS = [
     'web-i4fa.onrender.com',
     'afrijob.world',
     'www.afrijob.world',
     'localhost',
     '127.0.0.1',
 ]
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', ','.join(DEFAULT_ALLOWED_HOSTS)).split(',')
+    if host.strip()
+]
+if not ALLOWED_HOSTS:
+    raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS must contain at least one hostname.')
 
 LANGUAGE_CODE = 'en-us'
 
@@ -162,14 +169,14 @@ CSRF_TRUSTED_ORIGINS = [
         'http://localhost,http://127.0.0.1,http://testserver,'
         'https://localhost,https://127.0.0.1,https://testserver,'
         'https://afrijob.world,https://www.afrijob.world,'
-        'https://web-auir.onrender.com'
+        'https://web-i4fa.onrender.com'
     ).split(',')
     if origin.strip()
 ]
 
-SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False').lower() in {'1', 'true', 'yes'}
+SECURE_SSL_REDIRECT = environment_bool('DJANGO_SECURE_SSL_REDIRECT')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_COOKIES = os.environ.get('DJANGO_SECURE_COOKIES', 'False').lower() in {'1', 'true', 'yes'}
+SECURE_COOKIES = environment_bool('DJANGO_SECURE_COOKIES')
 SESSION_COOKIE_SECURE = SECURE_COOKIES
 CSRF_COOKIE_SECURE = SECURE_COOKIES
 SESSION_COOKIE_HTTPONLY = True
@@ -188,9 +195,11 @@ CONTENT_SECURITY_POLICY = (
 )
 X_FRAME_OPTIONS = 'DENY'
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
-SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0'))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
-SECURE_HSTS_PRELOAD = SECURE_HSTS_SECONDS > 0
+SECURE_HSTS_SECONDS = int(os.environ.get(
+    'DJANGO_SECURE_HSTS_SECONDS', '0'
+))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = environment_bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS')
+SECURE_HSTS_PRELOAD = environment_bool('DJANGO_SECURE_HSTS_PRELOAD')
 
 ROOT_URLCONF = 'jopportal.urls'
 
