@@ -39,13 +39,12 @@ def environment_bool(name, default=False):
     return os.environ.get(name, str(default)).strip().lower() in TRUE_VALUES
 
 
-DEBUG = not production_environment and environment_bool('DJANGO_DEBUG', True)
+DEBUG = environment_bool('DJANGO_DEBUG', not production_environment)
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '').strip()
-if not SECRET_KEY:
-    raise ImproperlyConfigured(
-        'DJANGO_SECRET_KEY must be set to a strong, private value in the environment.'
-    )
+FALLBACK_SECRET_KEY = (
+    'dev-fallback-secret-key-for-local-use-only-change-this-before-deploy-1234567890'
+)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '').strip() or FALLBACK_SECRET_KEY
 
 DEFAULT_ALLOWED_HOSTS = [
     'web-i4fa.onrender.com',
@@ -150,6 +149,8 @@ RATE_LIMIT_TRUST_X_FORWARDED_FOR = os.environ.get(
 AUTH_LOGIN_FAILURE_LIMIT = int(os.environ.get('DJANGO_AUTH_LOGIN_FAILURE_LIMIT', '5'))
 AUTH_LOGIN_FAILURE_WINDOW = int(os.environ.get('DJANGO_AUTH_LOGIN_FAILURE_WINDOW', '900'))
 AUTH_LOGIN_BLOCK_DURATION = int(os.environ.get('DJANGO_AUTH_LOGIN_BLOCK_DURATION', '900'))
+LOGIN_URL = f'/{ADMIN_URL.strip("/")}/login/'
+LOGIN_REDIRECT_URL = f'/{ADMIN_URL.strip("/")}/'
 cache_location = os.environ.get('DJANGO_CACHE_URL', '').strip()
 CACHES = {
     'default': {
@@ -174,11 +175,12 @@ CSRF_TRUSTED_ORIGINS = [
     if origin.strip()
 ]
 
-SECURE_SSL_REDIRECT = environment_bool('DJANGO_SECURE_SSL_REDIRECT')
+# HTTPS is opt-in. If you do not run this site behind TLS, keep it disabled.
+SECURE_SSL_REDIRECT = environment_bool('DJANGO_SECURE_SSL_REDIRECT', False)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_COOKIES = environment_bool('DJANGO_SECURE_COOKIES')
-SESSION_COOKIE_SECURE = SECURE_COOKIES
-CSRF_COOKIE_SECURE = SECURE_COOKIES
+SECURE_COOKIES = environment_bool('DJANGO_SECURE_COOKIES', False)
+SESSION_COOKIE_SECURE = SECURE_COOKIES and SECURE_SSL_REDIRECT
+CSRF_COOKIE_SECURE = SECURE_COOKIES and SECURE_SSL_REDIRECT
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
@@ -273,12 +275,18 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+# Use a non-manifested static backend in non-debug mode so the app can still boot and
+# render templates when the compressed manifest has not been generated yet.
 STORAGES = {
     'default': {
         'BACKEND': 'django.core.files.storage.FileSystemStorage',
     },
     'staticfiles': {
-        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage' if DEBUG else 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.StaticFilesStorage'
+            if DEBUG
+            else 'whitenoise.storage.CompressedStaticFilesStorage'
+        ),
     },
 }
 

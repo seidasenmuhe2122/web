@@ -738,6 +738,21 @@ class LegalPageTests(TestCase):
         self.assertGreaterEqual(page.updated_at, original_updated_at)
         self.assertContains(self.client.get('/pages/support/'), 'Updated Support')
 
+    def test_admin_login_redirects_to_dashboard_after_success(self):
+        user = get_user_model().objects.create_superuser(
+            username='redirectadmin', email='redirectadmin@example.com', password='test-password-123'
+        )
+
+        response = self.client.post(
+            f'/{settings.ADMIN_URL}login/',
+            {'username': user.username, 'password': 'test-password-123'},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], f'/{settings.ADMIN_URL}')
+        self.assertContains(response, 'Dashboard')
+
     def test_admin_login_page_has_language_switcher(self):
         response = self.client.get(reverse('admin:login'))
 
