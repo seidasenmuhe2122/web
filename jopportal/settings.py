@@ -13,11 +13,13 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 import re
 from pathlib import Path
+from dotenv import load_dotenv
 from django.core.exceptions import ImproperlyConfigured
 import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env")
 
 configured_admin_url = os.environ.get('DJANGO_ADMIN_URL', 'secure-console-7f3a91').strip().strip('/')
 if not re.fullmatch(r'[A-Za-z0-9_-]{8,80}', configured_admin_url):
@@ -231,13 +233,24 @@ WSGI_APPLICATION = 'jopportal.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=int(os.environ.get('DJANGO_DB_CONN_MAX_AGE', '60')),
-        conn_health_checks=True,
-    )
-}
+# Database
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=int(os.environ.get("DJANGO_DB_CONN_MAX_AGE", "60")),
+            conn_health_checks=True,
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation

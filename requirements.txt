@@ -9,3 +9,7 @@ gunicorn
 redis>=5.0,<8.0
 dj-database-url
 psycopg[binary]
+requests>=2.32,<3.0
+beautifulsoup4>=4.12,<5.0
+telethon>=1.40,<2.0
+python-dotenv==1.2.3

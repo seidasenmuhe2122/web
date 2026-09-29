@@ -65,7 +65,41 @@ class Job(models.Model):
     description_ar = models.TextField(blank=True)
     description_es = models.TextField(blank=True)
 
-    apply_link = models.URLField(max_length=500)
+    apply_link = models.URLField(max_length=500, blank=True)
+    source_name = models.CharField(max_length=200, blank=True)
+    source_url = models.URLField(max_length=1500, blank=True)
+    original_content = models.TextField(blank=True)
+    content_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    normalized_title = models.CharField(max_length=255, blank=True, db_index=True)
+    normalized_company = models.CharField(max_length=255, blank=True, db_index=True)
+    normalized_location = models.CharField(max_length=255, blank=True, db_index=True)
+    auto_imported = models.BooleanField(default=False, db_index=True)
+    telegram_notification_sent_at = models.DateTimeField(blank=True, null=True)
+
+    TELEGRAM_DESTINATION_MODES = [
+        ('auto', 'Automatic source routing'),
+        ('all', 'All enabled destinations'),
+        ('selected', 'Selected destinations'),
+    ]
+
+    source = models.ForeignKey(
+        'JobSource',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='jobs',
+    )
+    telegram_destination_mode = models.CharField(
+        max_length=10,
+        choices=TELEGRAM_DESTINATION_MODES,
+        default='auto',
+    )
+    telegram_destinations = models.ManyToManyField(
+        'TelegramDestination',
+        blank=True,
+        related_name='jobs',
+    )
+
     deadline = models.DateField(blank=True, null=True)
     posted_date = models.DateTimeField(auto_now_add=True)
 
@@ -533,3 +567,162 @@ class SentEmail(models.Model):
 
     def __str__(self):
         return f'Sent to {self.recipient} - {self.subject}'
+
+
+class JobSource(models.Model):
+    SOURCE_TYPES = [('telegram','Telegram'), ('website','Website')]
+    name = models.CharField(max_length=160, unique=True)
+    source_type = models.CharField(max_length=20, choices=SOURCE_TYPES)
+    enabled = models.BooleanField(default=True)
+    interval_minutes = models.PositiveIntegerField(default=15)
+    last_run_at = models.DateTimeField(blank=True, null=True)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class TelegramSource(models.Model):
+    source = models.OneToOneField(JobSource, on_delete=models.CASCADE, related_name='telegram_config')
+    channel = models.CharField(max_length=255, help_text='Username such as @channel or numeric channel ID.')
+    fetch_images = models.BooleanField(default=False)
+    max_messages_per_run = models.PositiveIntegerField(default=50)
+    last_message_id = models.BigIntegerField(default=0)
+    session_name = models.CharField(max_length=80, blank=True, default='afrijob')
+
+    def __str__(self):
+        return f'{self.source.name}: {self.channel}'
+
+
+class WebsiteSource(models.Model):
+    source = models.OneToOneField(JobSource, on_delete=models.CASCADE, related_name='website_config')
+    url = models.URLField(max_length=1000)
+    method = models.CharField(max_length=10, default='GET')
+    headers_json = models.JSONField(default=dict, blank=True)
+    listing_selector = models.CharField(max_length=300, blank=True, help_text='CSS selector for each job card. Leave blank to treat the page as one post.')
+    fields_json = models.JSONField(default=dict, blank=True, help_text='CSS selectors: title, company, location, description, deadline, application_url.')
+    max_items_per_run = models.PositiveIntegerField(default=30)
+    timeout_seconds = models.PositiveIntegerField(default=20)
+
+    def __str__(self):
+        return f'{self.source.name}: {self.url}'
+
+
+class TelegramDestination(models.Model):
+    name = models.CharField(max_length=160, unique=True)
+    channel_id = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text='Telegram channel username such as @mychannel or numeric channel ID.',
+    )
+    enabled = models.BooleanField(default=True)
+    allowed_sources = models.ManyToManyField(
+        'JobSource',
+        blank=True,
+        related_name='telegram_destinations',
+        help_text='Leave empty to allow jobs from all enabled sources.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def str(self):
+        return f'{self.name} ({self.channel_id})'
+
+
+class RawJobPost(models.Model):
+    STATUS_CHOICES = [
+        ('new','New'), ('processing','Processing'), ('processed','Processed'),
+        ('rejected','Rejected'), ('failed','Failed'), ('duplicate','Duplicate'),
+    ]
+    source = models.ForeignKey(JobSource, on_delete=models.SET_NULL, null=True, blank=True, related_name='raw_posts')
+    external_id = models.CharField(max_length=255, blank=True, db_index=True)
+    source_url = models.URLField(max_length=1500, blank=True)
+    content = models.TextField()
+    content_hash = models.CharField(max_length=64, db_index=True)
+    discovered_at = models.DateTimeField(default=timezone.now, db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new', db_index=True)
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    processed_at = models.DateTimeField(blank=True, null=True)
+    job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='raw_posts')
+    extracted_json = models.JSONField(default=dict, blank=True)
+    rejection_reason = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-discovered_at']
+        constraints = [models.UniqueConstraint(fields=['source','external_id'], name='uniq_raw_source_external')]
+
+    def __str__(self):
+        return f'{self.source or "Unknown"} / {self.external_id or self.pk}'
+
+
+class JobProcessingLog(models.Model):
+    STAGES = [('collect','Collect'),('ai','AI'),('validate','Validate'),('dedupe','Duplicate check'),('publish','Publish'),('telegram','Telegram'),('system','System')]
+    STATUSES = [('started','Started'),('success','Success'),('failed','Failed'),('skipped','Skipped')]
+    raw_post = models.ForeignKey(RawJobPost, on_delete=models.CASCADE, related_name='logs', null=True, blank=True)
+    job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True, related_name='processing_logs')
+    provider = models.CharField(max_length=80, blank=True)
+    stage = models.CharField(max_length=20, choices=STAGES)
+    status = models.CharField(max_length=20, choices=STATUSES)
+    message = models.TextField(blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class TelegramNotification(models.Model):
+    job = models.ForeignKey(
+        Job,
+        on_delete=models.CASCADE,
+        related_name='telegram_notifications',
+    )
+    destination = models.ForeignKey(
+        TelegramDestination,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='notifications',
+    )
+    channel_id = models.CharField(max_length=255)
+    message_id = models.BigIntegerField(blank=True, null=True)
+    message_text = models.TextField(blank=True)
+    status = models.CharField(max_length=20, default='pending')
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    sent_at = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['job', 'destination'],
+                name='uniq_telegram_notification_job_destination',
+            )
+        ]
+
+
+class AutomationRun(models.Model):
+    started_at = models.DateTimeField(default=timezone.now)
+    finished_at = models.DateTimeField(blank=True, null=True)
+    command = models.CharField(max_length=120)
+    collected = models.PositiveIntegerField(default=0)
+    processed = models.PositiveIntegerField(default=0)
+    published = models.PositiveIntegerField(default=0)
+    rejected = models.PositiveIntegerField(default=0)
+    duplicates = models.PositiveIntegerField(default=0)
+    failed = models.PositiveIntegerField(default=0)
+    summary = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-started_at']

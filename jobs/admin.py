@@ -25,6 +25,14 @@ from .models import (
     LegalPage,
     SentEmail,
     SiteSetting,
+    JobSource,
+    TelegramSource,
+    TelegramDestination,
+    WebsiteSource,
+    RawJobPost,
+    JobProcessingLog,
+    TelegramNotification,
+    AutomationRun,
 )
 from .templatetags.security_tags import sanitize_html
 
@@ -135,6 +143,7 @@ class JobAdmin(admin.ModelAdmin):
     search_fields = ('title', 'company_name', 'category__name')
     list_editable = ('display_mode', 'is_featured', 'is_urgent')
     readonly_fields = ('views_count', 'clicks_count')
+    filter_horizontal = ('telegram_destinations',)
     list_per_page = 20
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
@@ -700,3 +709,21 @@ class SentEmailAdmin(admin.ModelAdmin):
     @admin.display(description='Attachments')
     def attachment_summary(self, obj):
         return ', '.join(obj.attachment_names) if obj.attachment_names else 'None'
+    # Automation models
+    admin.site.register(JobSource)
+    admin.site.register(TelegramSource)
+    admin.site.register(WebsiteSource)
+    admin.site.register(RawJobPost)
+    admin.site.register(JobProcessingLog)
+    admin.site.register(TelegramNotification)
+    admin.site.register(AutomationRun)
+
+
+
+@admin.register(TelegramDestination)
+class TelegramDestinationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'channel_id', 'enabled')
+    list_filter = ('enabled',)
+    search_fields = ('name', 'channel_id')
+    filter_horizontal = ('allowed_sources',)
+    list_editable = ('enabled',)
