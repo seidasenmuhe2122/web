@@ -736,6 +736,8 @@ class AutomationControlAdmin(admin.ModelAdmin):
     list_display = (
         'enabled',
         'frequency_minutes',
+                'daily_max_jobs',
+                'daily_max_jobs',
         'last_run_at',
         'next_run_at',
         'updated_at',
@@ -816,3 +818,4 @@ class AutomationScheduleAdmin(admin.ModelAdmin):
             )
         }),
     )
+

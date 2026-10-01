@@ -316,9 +316,9 @@ def send_job_to_destination(job, destination):
     return notification
 
 
-def send_job(job):
-    destinations = get_job_destinations(job)
-
+def send_job(job, destinations=None):
+    if destinations is None:
+        destinations = get_job_destinations(job)
     if not destinations:
         raise RuntimeError(
             f'No enabled Telegram destination is allowed for job {job.pk}.'
@@ -355,3 +355,5 @@ def send_job(job):
         )
 
     return notifications
+
+

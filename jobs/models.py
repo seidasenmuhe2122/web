@@ -669,6 +669,10 @@ class AutomationControl(models.Model):
         choices=FREQUENCY_CHOICES,
         default=15,
     )
+    daily_max_jobs = models.PositiveIntegerField(
+        default=0,
+        help_text='Maximum jobs to publish per day. 0 = unlimited.',
+    )
     last_run_at = models.DateTimeField(blank=True, null=True)
     next_run_at = models.DateTimeField(blank=True, null=True)
     last_error = models.TextField(blank=True)
@@ -833,3 +837,4 @@ class AutomationRun(models.Model):
 
     class Meta:
         ordering = ['-started_at']
+

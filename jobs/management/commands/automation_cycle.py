@@ -3,10 +3,11 @@ from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from jobs.models import JobSource, RawJobPost, AutomationRun, AutomationControl
+from jobs.models import JobSource, RawJobPost, AutomationRun, AutomationControl, AutomationSchedule, TelegramNotification
 from jobs.services.collectors import collect_website, collect_telegram
 from jobs.services.processor import process_raw
 from jobs.services.telegram_service import send_job
+from jobs.services.scheduler_service import get_active_schedule, get_schedule_published_count, schedule_allows_job
 
 
 class Command(BaseCommand):
@@ -64,6 +65,19 @@ class Command(BaseCommand):
             ]
         )
 
+        schedule = get_active_schedule(now)
+        if not schedule:
+            self.stdout.write(self.style.WARNING('No active automation schedule.'))
+            return
+
+        schedule_published = get_schedule_published_count(schedule, now)
+        remaining_window = max(0, schedule.max_jobs - schedule_published)
+        daily_published = TelegramNotification.objects.filter(status='sent', sent_at__date=timezone.localdate()).values('job_id').distinct().count()
+        daily_remaining = max(0, control.daily_max_jobs - daily_published) if control.daily_max_jobs else opts['limit']
+        cycle_limit = min(opts['limit'], schedule.max_jobs_per_run, remaining_window, daily_remaining)
+        if cycle_limit <= 0:
+            self.stdout.write(self.style.WARNING('Schedule or daily job limit reached.'))
+            return
         run = AutomationRun.objects.create(command='automation_cycle')
 
         try:
@@ -103,7 +117,7 @@ class Command(BaseCommand):
 
             for raw in RawJobPost.objects.filter(
                 status='new'
-            ).order_by('discovered_at')[:opts['limit']]:
+            ).order_by('discovered_at')[:cycle_limit]:
 
                 job = process_raw(raw)
 
@@ -148,3 +162,7 @@ class Command(BaseCommand):
             control.last_error = str(exc)
             control.save(update_fields=['last_error', 'updated_at'])
             raise
+
+
+
+
