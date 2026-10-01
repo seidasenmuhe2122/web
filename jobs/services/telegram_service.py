@@ -1,6 +1,7 @@
 import os
-import requests
+import re
 
+import requests
 from django.urls import reverse
 from django.utils import timezone
 
@@ -9,13 +10,17 @@ from ..models import TelegramDestination, TelegramNotification
 
 def public_job_url(job, request=None):
     path = reverse('job_detail', args=[job.pk])
+
     if request:
         return request.build_absolute_uri(path)
 
-    return os.getenv(
-        'PUBLIC_BASE_URL',
-        'https://afrijob.world'
-    ).rstrip('/') + path
+    return (
+        os.getenv(
+            'PUBLIC_BASE_URL',
+            'https://afrijob.world'
+        ).rstrip('/')
+        + path
+    )
 
 
 def destination_allows_job(destination, job):
@@ -49,6 +54,36 @@ def get_job_destinations(job):
     ]
 
 
+def _telegram_summary(text, limit=650):
+    """
+    Create a medium-length Telegram summary.
+    The full description remains available on the website.
+    """
+    text = re.sub(r'\s+', ' ', text or '').strip()
+
+    if not text:
+        return ''
+
+    if len(text) <= limit:
+        return text
+
+    shortened = text[:limit]
+
+    # Prefer ending at a sentence boundary.
+    sentence_end = max(
+        shortened.rfind('. '),
+        shortened.rfind('! '),
+        shortened.rfind('? ')
+    )
+
+    if sentence_end >= int(limit * 0.6):
+        shortened = shortened[:sentence_end + 1]
+    else:
+        shortened = shortened.rsplit(' ', 1)[0]
+
+    return shortened + '…'
+
+
 def send_job_to_destination(job, destination):
     token = os.getenv(
         'TELEGRAM_BOT_TOKEN',
@@ -67,13 +102,71 @@ def send_job_to_destination(job, destination):
             f'Telegram destination "{destination.name}" has no channel ID'
         )
 
-    text = (
-        f'🚨 New Job Opportunity\n\n'
-        f'💼 Position: {job.title}\n'
-        f'🏢 Company: {job.company_name}\n'
-        f'📍 Location: {job.location}\n\n'
-        f'👉 Apply / View Details: {public_job_url(job)}'
+    # Prevent duplicate Telegram posts.
+    existing = TelegramNotification.objects.filter(
+        job=job,
+        destination=destination,
+        status='sent',
+    ).first()
+
+    if existing:
+        return existing
+
+    summary = _telegram_summary(
+        job.description,
+        limit=650
     )
+
+    job_type = (
+        job.get_job_type_display()
+        if hasattr(job, 'get_job_type_display')
+        else job.job_type
+    )
+
+    experience = (
+        job.get_experience_level_display()
+        if hasattr(job, 'get_experience_level_display')
+        else job.experience_level
+    )
+
+    salary = (
+        job.salary.strip()
+        if job.salary and job.salary.strip()
+        else 'Not specified'
+    )
+
+    lines = [
+        '🚨 NEW JOB OPPORTUNITY',
+        '',
+        f'💼 Position: {job.title}',
+        f'🏢 Company: {job.company_name}',
+        f'📍 Location: {job.location}',
+        f'🕐 Job Type: {job_type}',
+        f'🎓 Experience: {experience}',
+        f'💰 Salary: {salary}',
+        '',
+    ]
+
+    if summary:
+        lines.extend([
+            '📝 Summary:',
+            summary,
+            '',
+        ])
+
+    if job.deadline:
+        deadline = job.deadline.strftime('%B %d, %Y')
+        lines.extend([
+            f'⏰ Deadline: {deadline}',
+            '',
+        ])
+
+    lines.extend([
+        '👉 Full Details & Apply:',
+        public_job_url(job),
+    ])
+
+    text = '\n'.join(lines)
 
     response = requests.post(
         f'https://api.telegram.org/bot{token}/sendMessage',
@@ -88,7 +181,6 @@ def send_job_to_destination(job, destination):
     response.raise_for_status()
 
     data = response.json()
-
     if not data.get('ok'):
         raise RuntimeError(
             data.get(
