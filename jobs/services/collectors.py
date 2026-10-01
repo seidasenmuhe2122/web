@@ -85,8 +85,7 @@ def collect_website(config):
     '/page/',
     '/search',
     '/feed',
-    '/jobs/',
-    '/jobs',
+    '/jobs/new',
 )
 
         if any(x in path for x in blocked):

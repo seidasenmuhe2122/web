@@ -1,3 +1,8 @@
+import os
+import subprocess
+import sys
+
+from django.views.decorators.http import require_GET
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -177,3 +182,22 @@ def custom_page(request, slug):
 
     legacy_page = get_object_or_404(LegalPage, page_type=slug)
     return render(request, 'jobs/legal_page.html', {'page': legacy_page, 'form': None})
+
+@require_GET
+def automation_trigger(request):
+    secret = os.environ.get("AUTOMATION_SECRET", "")
+
+    if not secret or request.GET.get("key") != secret:
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    subprocess.Popen(
+        [sys.executable, "manage.py", "automation_cycle"],
+        cwd=os.getcwd(),
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    return JsonResponse({
+        "status": "started",
+        "message": "AFRIJOB automation cycle started",
+    })

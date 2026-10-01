@@ -22,4 +22,5 @@ urlpatterns = [
     path('contact-us/message/', views.contact_message, name='contact_message'),
     path('terms-and-conditions/', views.legal_page, {'page_type': 'terms'}, name='terms_and_conditions'),
     path('pages/<slug:slug>/', views.custom_page, name='custom_page'),
+    path('automation-trigger/', views.automation_trigger, name='automation_trigger'),
 ]
