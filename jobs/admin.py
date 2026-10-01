@@ -33,6 +33,7 @@ from .models import (
     JobProcessingLog,
     TelegramNotification,
     AutomationRun,
+    AutomationControl,
 )
 from .templatetags.security_tags import sanitize_html
 
@@ -727,3 +728,32 @@ class TelegramDestinationAdmin(admin.ModelAdmin):
     search_fields = ('name', 'channel_id')
     filter_horizontal = ('allowed_sources',)
     list_editable = ('enabled',)
+
+
+@admin.register(AutomationControl)
+class AutomationControlAdmin(admin.ModelAdmin):
+    list_display = (
+        'enabled',
+        'frequency_minutes',
+        'last_run_at',
+        'next_run_at',
+        'updated_at',
+    )
+    list_filter = ('enabled', 'frequency_minutes')
+    readonly_fields = ('last_run_at', 'next_run_at', 'updated_at')
+    fieldsets = (
+        ('Automation Settings', {
+            'fields': (
+                'enabled',
+                'frequency_minutes',
+            )
+        }),
+        ('Status', {
+            'fields': (
+                'last_run_at',
+                'next_run_at',
+                'last_error',
+                'updated_at',
+            )
+        }),
+    )

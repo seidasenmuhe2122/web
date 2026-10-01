@@ -24,18 +24,126 @@ def public_job_url(job, request=None):
 
 
 def destination_allows_job(destination, job):
+    # Source-level filtering
     allowed_sources = destination.allowed_sources.all()
+    if allowed_sources.exists():
+        if not job.source_id:
+            return False
+        if not allowed_sources.filter(pk=job.source_id).exists():
+            return False
 
-    if not allowed_sources.exists():
-        return True
+    # Advanced destination filters
+    filters = destination.filters_json or {}
 
-    if not job.source_id:
+    def values(key):
+        value = filters.get(key, [])
+        if isinstance(value, str):
+            return [value.strip().lower()] if value.strip() else []
+        if isinstance(value, list):
+            return [str(x).strip().lower() for x in value if str(x).strip()]
+        return []
+
+    def matches(field_value, key):
+        wanted = values(key)
+        if not wanted:
+            return True
+        actual = str(field_value or '').strip().lower()
+        return bool(actual) and any(
+            item == actual or item in actual or actual in item
+            for item in wanted
+        )
+
+    def matches_any_list(field_values, key):
+        wanted = values(key)
+        if not wanted:
+            return True
+        actual_values = [
+            str(x).strip().lower()
+            for x in (field_values or [])
+            if str(x).strip()
+        ]
+        return any(
+            wanted_item == actual_item
+            or wanted_item in actual_item
+            or actual_item in wanted_item
+            for wanted_item in wanted
+            for actual_item in actual_values
+        )
+
+    # Single-value filters
+    if not matches(job.organization_type, 'organization_type'):
         return False
 
-    return allowed_sources.filter(
-        pk=job.source_id
-    ).exists()
+    if not matches(job.education_level, 'education_level'):
+        return False
 
+    if not matches(job.employment_type, 'employment_type'):
+        return False
+
+    if not matches(job.work_mode, 'work_mode'):
+        return False
+
+    if not matches(job.region, 'region'):
+        return False
+
+    if not matches(job.country, 'country'):
+        return False
+
+    if not matches(job.experience_level, 'experience'):
+        return False
+
+    if not matches(
+        job.category.name if job.category else '',
+        'category'
+    ):
+        return False
+
+    # Languages
+    if not matches_any_list(job.languages_required, 'languages'):
+        return False
+
+    # Required keywords: at least one selected keyword must appear
+    keyword_filters = values('keywords')
+    if keyword_filters:
+        job_text = ' '.join([
+            str(job.title or ''),
+            str(job.company_name or ''),
+            str(job.description or ''),
+            str(job.category.name if job.category else ''),
+            ' '.join(str(x) for x in (job.keywords or [])),
+        ]).lower()
+
+        if not any(keyword in job_text for keyword in keyword_filters):
+            return False
+
+    # Excluded keywords: any match blocks the destination
+    excluded = values('excluded_keywords')
+    if excluded:
+        job_text = ' '.join([
+            str(job.title or ''),
+            str(job.company_name or ''),
+            str(job.description or ''),
+            ' '.join(str(x) for x in (job.keywords or [])),
+        ]).lower()
+
+        if any(keyword in job_text for keyword in excluded):
+            return False
+
+    # Salary minimum / maximum filters
+    min_salary = filters.get('salary_min')
+    max_salary = filters.get('salary_max')
+
+    try:
+        if min_salary is not None and job.salary_max is not None:
+            if float(job.salary_max) < float(min_salary):
+                return False
+        if max_salary is not None and job.salary_min is not None:
+            if float(job.salary_min) > float(max_salary):
+                return False
+    except (TypeError, ValueError):
+        pass
+
+    return True
 
 def get_job_destinations(job):
     destinations = TelegramDestination.objects.filter(

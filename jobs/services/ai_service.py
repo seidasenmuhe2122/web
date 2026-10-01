@@ -14,6 +14,24 @@ SCHEMA = {
         'company': {'type': 'string'},
         'location': {'type': 'string'},
         'job_type': {'type': 'string'},
+        'organization_type': {'type': 'string'},
+        'education_level': {'type': 'string'},
+        'employment_type': {'type': 'string'},
+        'work_mode': {'type': 'string'},
+        'region': {'type': 'string'},
+        'country': {'type': 'string'},
+        'languages_required': {
+            'type': 'array',
+            'items': {'type': 'string'}
+        },
+        'keywords': {
+            'type': 'array',
+            'items': {'type': 'string'}
+        },
+        'salary_min': {'type': ['number', 'null']},
+        'salary_max': {'type': ['number', 'null']},
+        'salary_currency': {'type': 'string'},
+
         'category': {'type': 'string'},
         'salary': {'type': 'string'},
         'deadline': {'type': 'string'},
@@ -41,6 +59,18 @@ SCHEMA = {
         'company',
         'location',
         'job_type',
+        'organization_type',
+        'education_level',
+        'employment_type',
+        'work_mode',
+        'region',
+        'country',
+        'languages_required',
+        'keywords',
+        'salary_min',
+        'salary_max',
+        'salary_currency',
+
         'category',
         'salary',
         'deadline',
@@ -73,6 +103,13 @@ Preserve exact application URLs only when present in the source.
 Clean promotional text, emojis, repeated hashtags and tracking text,
 but do not remove useful job facts.
 
+Classify organization type only when explicitly supported by the source:
+NGO, Private Company, Government, International Organization, UN / Development Organization, or Other.
+Classify education, employment type, experience, work mode, region and country only from stated facts.
+For missing or unclear values, return an empty string. Never infer.
+Extract languages explicitly required and useful job keywords when present.
+Salary_min and salary_max must be numeric only when actual numeric salary amounts are stated; otherwise return null.
+salary_currency should be the stated currency code/name only.
 Extract title, company, location/remote, type, category, salary, deadline,
 description, requirements, responsibilities, education, experience,
 how-to-apply, application URL, email, phone, source name and source URL.

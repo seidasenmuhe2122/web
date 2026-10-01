@@ -75,6 +75,19 @@ class Job(models.Model):
     normalized_location = models.CharField(max_length=255, blank=True, db_index=True)
     auto_imported = models.BooleanField(default=False, db_index=True)
     telegram_notification_sent_at = models.DateTimeField(blank=True, null=True)
+    # AI classification fields for filtering and Telegram routing
+    organization_type = models.CharField(max_length=80, blank=True, db_index=True)
+    education_level = models.CharField(max_length=80, blank=True, db_index=True)
+    employment_type = models.CharField(max_length=50, blank=True, db_index=True)
+    work_mode = models.CharField(max_length=30, blank=True, db_index=True)
+    region = models.CharField(max_length=100, blank=True, db_index=True)
+    country = models.CharField(max_length=100, blank=True, db_index=True)
+    languages_required = models.JSONField(default=list, blank=True)
+    keywords = models.JSONField(default=list, blank=True)
+    salary_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    salary_max = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    salary_currency = models.CharField(max_length=10, blank=True)
+
 
     TELEGRAM_DESTINATION_MODES = [
         ('auto', 'Automatic source routing'),
@@ -621,6 +634,11 @@ class TelegramDestination(models.Model):
         help_text='Telegram channel username such as @mychannel or numeric channel ID.',
     )
     enabled = models.BooleanField(default=True)
+    filters_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Destination filters: organization, education, experience, employment, region, country, category, work mode, keywords, salary, etc.',
+    )
     allowed_sources = models.ManyToManyField(
         'JobSource',
         blank=True,
@@ -635,6 +653,33 @@ class TelegramDestination(models.Model):
 
     def str(self):
         return f'{self.name} ({self.channel_id})'
+
+
+class AutomationControl(models.Model):
+    FREQUENCY_CHOICES = [
+        (10, 'Every 10 minutes'),
+        (15, 'Every 15 minutes'),
+        (30, 'Every 30 minutes'),
+        (60, 'Every 1 hour'),
+        (0, 'Manual only'),
+    ]
+
+    enabled = models.BooleanField(default=True)
+    frequency_minutes = models.PositiveIntegerField(
+        choices=FREQUENCY_CHOICES,
+        default=15,
+    )
+    last_run_at = models.DateTimeField(blank=True, null=True)
+    next_run_at = models.DateTimeField(blank=True, null=True)
+    last_error = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Automation Control'
+        verbose_name_plural = 'Automation Control'
+
+    def str(self):
+        return 'AFRIJOB Automation Control'
 
 
 class RawJobPost(models.Model):

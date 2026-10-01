@@ -63,6 +63,18 @@ def process_raw(raw):
             apply_link=app, deadline=parse_deadline(data.get('deadline')), source_name=(data.get('source_name') or (raw.source.name if raw.source else ''))[:200],
             source_url=(data.get('source_url') or raw.source_url or '')[:1000], original_content=raw.content, content_hash=fingerprint(data,raw.content),
             normalized_title=normalize(title)[:220], normalized_company=normalize(company)[:220], normalized_location=normalize(data.get('location'))[:160], auto_imported=True,
+              organization_type=(data.get('organization_type') or '').strip()[:80],
+              education_level=(data.get('education_level') or data.get('education') or '').strip()[:80],
+              employment_type=(data.get('employment_type') or data.get('job_type') or '').strip()[:50],
+              work_mode=(data.get('work_mode') or '').strip()[:30],
+              region=(data.get('region') or '').strip()[:100],
+              country=(data.get('country') or '').strip()[:100],
+              languages_required=data.get('languages_required') or [],
+              keywords=data.get('keywords') or [],
+              salary_min=data.get('salary_min') or None,
+              salary_max=data.get('salary_max') or None,
+              salary_currency=(data.get('salary_currency') or '').strip()[:10],
+
         )
         raw.status, raw.job, raw.processed_at = 'processed', job, timezone.now()
         raw.save(update_fields=['status','job','processed_at'])
