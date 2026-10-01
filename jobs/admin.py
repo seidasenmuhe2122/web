@@ -34,6 +34,7 @@ from .models import (
     TelegramNotification,
     AutomationRun,
     AutomationControl,
+    AutomationSchedule,
 )
 from .templatetags.security_tags import sanitize_html
 
@@ -753,6 +754,64 @@ class AutomationControlAdmin(admin.ModelAdmin):
                 'last_run_at',
                 'next_run_at',
                 'last_error',
+                'updated_at',
+            )
+        }),
+    )
+
+
+@admin.register(AutomationSchedule)
+class AutomationScheduleAdmin(admin.ModelAdmin):
+    list_display = (
+        'name',
+        'enabled',
+        'start_time',
+        'end_time',
+        'max_jobs',
+        'max_jobs_per_run',
+        'jobs_published',
+    )
+    list_filter = ('enabled',)
+    search_fields = ('name',)
+    filter_horizontal = ('destinations',)
+    list_editable = ('enabled',)
+    readonly_fields = (
+        'last_run_at',
+        'jobs_published',
+        'created_at',
+        'updated_at',
+    )
+    fieldsets = (
+        ('Schedule', {
+            'fields': (
+                'name',
+                'enabled',
+                'days_of_week',
+                'start_time',
+                'end_time',
+            )
+        }),
+        ('Job Limits', {
+            'fields': (
+                'max_jobs',
+                'max_jobs_per_run',
+            )
+        }),
+        ('Telegram Destinations', {
+            'fields': (
+                'destinations',
+            )
+        }),
+        ('Filters', {
+            'fields': (
+                'filters_json',
+            )
+        }),
+        ('Status', {
+            'fields': (
+                'last_run_at',
+                'jobs_published',
+                'created_at',
                 'updated_at',
             )
         }),

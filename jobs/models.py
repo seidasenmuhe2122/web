@@ -682,6 +682,68 @@ class AutomationControl(models.Model):
         return 'AFRIJOB Automation Control'
 
 
+
+class AutomationSchedule(models.Model):
+    DAYS_OF_WEEK = [
+        (0, 'Monday'),
+        (1, 'Tuesday'),
+        (2, 'Wednesday'),
+        (3, 'Thursday'),
+        (4, 'Friday'),
+        (5, 'Saturday'),
+        (6, 'Sunday'),
+    ]
+
+    name = models.CharField(max_length=160, unique=True)
+    enabled = models.BooleanField(default=True)
+
+    days_of_week = models.JSONField(
+        default=list,
+        blank=True,
+        help_text='Use weekday numbers: 0=Monday ... 6=Sunday.',
+    )
+
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
+    max_jobs = models.PositiveIntegerField(
+        default=5,
+        help_text='Maximum jobs allowed during this schedule window.',
+    )
+
+    max_jobs_per_run = models.PositiveIntegerField(
+        default=1,
+        help_text='Maximum jobs to publish in one automation cycle.',
+    )
+
+    destinations = models.ManyToManyField(
+        'TelegramDestination',
+        blank=True,
+        related_name='automation_schedules',
+        help_text='Leave empty to use the job destination rules.',
+    )
+
+    filters_json = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Optional country, region, organization, category, keyword and other filters.',
+    )
+
+    last_run_at = models.DateTimeField(blank=True, null=True)
+    jobs_published = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['start_time', 'name']
+        verbose_name = 'Automation Schedule'
+        verbose_name_plural = 'Automation Schedules'
+
+    def str(self):
+        return self.name
+
+
 class RawJobPost(models.Model):
     STATUS_CHOICES = [
         ('new','New'), ('processing','Processing'), ('processed','Processed'),
