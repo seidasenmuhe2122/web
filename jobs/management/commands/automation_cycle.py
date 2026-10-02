@@ -27,13 +27,15 @@ class Command(BaseCommand):
 
         if not control.enabled:
             self.stdout.write(self.style.WARNING('Automation is disabled.'))
-            return
+            retu
+
 
         if control.frequency_minutes == 0:
             self.stdout.write(
                 self.style.WARNING('Automation is set to Manual only.')
             )
-            return
+            retu
+
 
         if control.last_run_at:
             next_allowed = control.last_run_at + timedelta(
@@ -49,7 +51,8 @@ class Command(BaseCommand):
                 )
                 control.next_run_at = next_allowed
                 control.save(update_fields=['next_run_at'])
-                return
+                retu
+
 
         control.last_run_at = now
         control.next_run_at = now + timedelta(
@@ -68,7 +71,8 @@ class Command(BaseCommand):
         schedule = get_active_schedule(now)
         if not schedule:
             self.stdout.write(self.style.WARNING('No active automation schedule.'))
-            return
+            retu
+
 
         schedule_published = get_schedule_published_count(schedule, now)
         remaining_window = max(0, schedule.max_jobs - schedule_published)
@@ -77,7 +81,8 @@ class Command(BaseCommand):
         cycle_limit = min(opts['limit'], schedule.max_jobs_per_run, remaining_window, daily_remaining)
         if cycle_limit <= 0:
             self.stdout.write(self.style.WARNING('Schedule or daily job limit reached.'))
-            return
+            retu
+
         run = AutomationRun.objects.create(command='automation_cycle')
 
         try:
@@ -131,11 +136,13 @@ class Command(BaseCommand):
                     run.failed += 1
                 if (
                     job
+                    and schedule_allows_job(schedule, job)
                     and not opts['no_telegram']
                     and not job.telegram_notification_sent_at
                 ):
                     try:
-                        send_job(job)
+                        destinations = list(schedule.destinations.filter(enabled=True))
+                        send_job(job, destinations=destinations)
                         run.published += 1
                     except Exception as exc:
                         run.failed += 1
@@ -162,6 +169,8 @@ class Command(BaseCommand):
             control.last_error = str(exc)
             control.save(update_fields=['last_error', 'updated_at'])
             raise
+
+
 
 
 
