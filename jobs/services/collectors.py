@@ -1,11 +1,18 @@
 import asyncio
+import ipaddress
+import logging
 import os
+import socket
+from urllib.parse import urljoin, urlsplit
 
 import requests
 from bs4 import BeautifulSoup
 
-from .utils import clean_text, absolute_url, sha256
+from .utils import clean_text, absolute_url, safe_error_message, safe_http_url, sha256
 from ..models import RawJobPost
+
+
+logger = logging.getLogger(__name__)
 
 
 def save_raw(source, content, external_id='', source_url=''):
@@ -20,6 +27,7 @@ def save_raw(source, content, external_id='', source_url=''):
         'source_url': source_url,
         'content': content,
         'content_hash': h,
+        'status': 'new',
     }
 
     obj, created = RawJobPost.objects.get_or_create(
@@ -106,13 +114,50 @@ def collect_website(config):
         return any(word in combined for word in keywords)
 
     def fetch(url):
-        response = requests.get(
-            url,
-            headers=headers,
-            timeout=config.timeout_seconds,
-        )
-        response.raise_for_status()
-        return response
+        current_url = url
+        request_headers = dict(headers)
+        for _ in range(6):
+            if not safe_http_url(current_url):
+                raise ValueError('Website URL must use HTTP or HTTPS without embedded credentials.')
+
+            parsed = urlsplit(current_url)
+            try:
+                address = ipaddress.ip_address(parsed.hostname)
+                addresses = [address]
+            except ValueError:
+                records = socket.getaddrinfo(
+                    parsed.hostname,
+                    parsed.port or (443 if parsed.scheme == 'https' else 80),
+                    type=socket.SOCK_STREAM,
+                )
+                addresses = list({ipaddress.ip_address(record[4][0]) for record in records})
+
+            if not addresses or any(not address.is_global for address in addresses):
+                raise ValueError('Website URL resolves to a non-public network address.')
+
+            response = requests.get(
+                current_url,
+                headers=request_headers,
+                timeout=config.timeout_seconds,
+                allow_redirects=False,
+            )
+            if response.is_redirect or response.is_permanent_redirect:
+                location = response.headers.get('Location')
+                response.close()
+                if not location:
+                    raise ValueError('Website redirected without a Location header.')
+                next_url = urljoin(current_url, location)
+                if urlsplit(next_url).netloc.lower() != parsed.netloc.lower():
+                    request_headers = {
+                        key: value for key, value in request_headers.items()
+                        if key.lower() not in {'authorization', 'cookie'}
+                    }
+                current_url = next_url
+                continue
+            response.raise_for_status()
+            return response
+
+        raise ValueError('Website exceeded the maximum redirect count.')
 
     # ---------------------------------------------------------
     # 1. Open the configured source/listing page
@@ -239,9 +284,19 @@ def collect_website(config):
             if raw:
                 out.append(raw)
 
-        except requests.RequestException:
+        except requests.RequestException as exc:
+            logger.warning(
+                'Website detail fetch failed for host %s: %s',
+                urlsplit(url).hostname,
+                safe_error_message(exc),
+            )
             continue
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                'Website detail processing failed for host %s: %s',
+                urlsplit(url).hostname,
+                safe_error_message(exc),
+            )
             continue
 
     return out

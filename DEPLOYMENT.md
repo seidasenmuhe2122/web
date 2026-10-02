@@ -29,6 +29,17 @@ DJANGO_RATE_LIMIT_TRUST_X_FORWARDED_FOR=False
 DJANGO_AUTH_LOGIN_FAILURE_LIMIT=5
 DJANGO_AUTH_LOGIN_FAILURE_WINDOW=900
 DJANGO_AUTH_LOGIN_BLOCK_DURATION=900
+AUTOMATION_SECRET=<long-random-secret>
+AUTOMATION_TIME_ZONE=Africa/Addis_Ababa
+AUTOMATION_LOG_FILE=logs/automation.log
+PUBLIC_BASE_URL=https://www.afrijob.world
+TELEGRAM_BOT_TOKEN=<telegram-bot-token>
+TELEGRAM_API_ID=<telegram-api-id>
+TELEGRAM_API_HASH=<telegram-api-hash>
+TELEGRAM_SESSION_STRING=<telethon-session-string>
+GEMINI_API_KEY=<optional-gemini-key>
+GROQ_API_KEY=<optional-groq-key>
+OPENROUTER_API_KEY=<optional-openrouter-key>
 ```
 
 Use the real application domain in `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, and `DJANGO_ADVERTISEMENT_ALLOWED_HOSTS`.
@@ -75,3 +86,13 @@ variables shown above, including `DJANGO_EMAIL_BACKEND` and `DJANGO_DEFAULT_FROM
   overwrites `X-Forwarded-For` and is trusted to provide the client address.
 - Password creation and change operations require at least 12 characters and use
   Django's common-password and numeric-password validators.
+- Configure a writable `AUTOMATION_LOG_FILE`; the worker appends subprocess output there
+  while run status, counters, and redacted errors are also available under Admin > Automation Runs.
+- Set `AUTOMATION_TIME_ZONE` to the timezone used when entering schedule times. The default is
+  `Africa/Addis_Ababa`; this does not change Django's site-wide `TIME_ZONE`.
+- Configure cron-job.org to send a GET every 15 minutes to
+  `https://www.afrijob.world/automation-trigger/?key=<AUTOMATION_SECRET>`. The trigger also
+  accepts the secret in the `X-Automation-Secret` header. Repeated calls while a worker is active
+  receive HTTP 409 and do not start another worker.
+- After deploying automation changes, run `python manage.py migrate`, then
+  `python manage.py check` and `python manage.py test` before enabling the cron job.

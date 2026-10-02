@@ -711,15 +711,37 @@ class SentEmailAdmin(admin.ModelAdmin):
     @admin.display(description='Attachments')
     def attachment_summary(self, obj):
         return ', '.join(obj.attachment_names) if obj.attachment_names else 'None'
-    # Automation models
-    admin.site.register(JobSource)
-    admin.site.register(TelegramSource)
-    admin.site.register(WebsiteSource)
-    admin.site.register(RawJobPost)
-    admin.site.register(JobProcessingLog)
-    admin.site.register(TelegramNotification)
-    admin.site.register(AutomationRun)
 
+
+admin.site.register(JobSource)
+admin.site.register(TelegramSource)
+admin.site.register(WebsiteSource)
+admin.site.register(RawJobPost)
+admin.site.register(JobProcessingLog)
+admin.site.register(TelegramNotification)
+
+
+
+@admin.register(AutomationRun)
+class AutomationRunAdmin(admin.ModelAdmin):
+    list_display = (
+        'started_at',
+        'finished_at',
+        'status',
+        'collected',
+        'processed',
+        'published',
+        'rejected',
+        'duplicates',
+        'failed',
+    )
+    list_filter = ('status', 'command', 'started_at')
+    search_fields = ('summary', 'error_message')
+    readonly_fields = (
+        'started_at', 'finished_at', 'command', 'status', 'error_message',
+        'collected', 'processed', 'published', 'rejected', 'duplicates',
+        'failed', 'summary',
+    )
 
 
 @admin.register(TelegramDestination)
@@ -742,7 +764,7 @@ class AutomationControlAdmin(admin.ModelAdmin):
         'updated_at',
     )
     list_filter = ('enabled', 'frequency_minutes')
-    readonly_fields = ('last_run_at', 'next_run_at', 'updated_at')
+    readonly_fields = ('last_run_at', 'next_run_at', 'active_run', 'updated_at')
     fieldsets = (
         ('Automation Settings', {
             'fields': (
@@ -756,6 +778,7 @@ class AutomationControlAdmin(admin.ModelAdmin):
                 'last_run_at',
                 'next_run_at',
                 'last_error',
+                'active_run',
                 'updated_at',
             )
         }),

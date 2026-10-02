@@ -676,6 +676,13 @@ class AutomationControl(models.Model):
     last_run_at = models.DateTimeField(blank=True, null=True)
     next_run_at = models.DateTimeField(blank=True, null=True)
     last_error = models.TextField(blank=True)
+    active_run = models.ForeignKey(
+        'AutomationRun',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='active_controls',
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -793,6 +800,13 @@ class JobProcessingLog(models.Model):
 
 
 class TelegramNotification(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sending', 'Sending'),
+        ('sent', 'Sent'),
+        ('failed', 'Failed'),
+    ]
+
     job = models.ForeignKey(
         Job,
         on_delete=models.CASCADE,
@@ -808,9 +822,10 @@ class TelegramNotification(models.Model):
     channel_id = models.CharField(max_length=255)
     message_id = models.BigIntegerField(blank=True, null=True)
     message_text = models.TextField(blank=True)
-    status = models.CharField(max_length=20, default='pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     attempts = models.PositiveIntegerField(default=0)
     last_error = models.TextField(blank=True)
+    last_attempt_at = models.DateTimeField(blank=True, null=True)
     sent_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -824,9 +839,19 @@ class TelegramNotification(models.Model):
 
 
 class AutomationRun(models.Model):
+    STATUS_CHOICES = [
+        ('queued', 'Queued'),
+        ('running', 'Running'),
+        ('success', 'Succeeded'),
+        ('failed', 'Failed'),
+        ('skipped', 'Skipped'),
+    ]
+
     started_at = models.DateTimeField(default=timezone.now)
     finished_at = models.DateTimeField(blank=True, null=True)
     command = models.CharField(max_length=120)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='queued', db_index=True)
+    error_message = models.TextField(blank=True)
     collected = models.PositiveIntegerField(default=0)
     processed = models.PositiveIntegerField(default=0)
     published = models.PositiveIntegerField(default=0)

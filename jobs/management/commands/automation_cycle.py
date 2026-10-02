@@ -1,13 +1,29 @@
 from datetime import timedelta
 
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
+from django.db.models import Q
 from django.utils import timezone
 
-from jobs.models import JobSource, RawJobPost, AutomationRun, AutomationControl, AutomationSchedule, TelegramNotification
+from jobs.models import (
+    AutomationControl,
+    AutomationRun,
+    AutomationSchedule,
+    Job,
+    JobSource,
+    RawJobPost,
+    TelegramNotification,
+)
 from jobs.services.collectors import collect_website, collect_telegram
 from jobs.services.processor import process_raw
 from jobs.services.telegram_service import send_job
-from jobs.services.scheduler_service import get_active_schedule, get_schedule_published_count, schedule_allows_job
+from jobs.services.scheduler_service import (
+    get_automation_day_bounds,
+    get_active_schedule,
+    get_schedule_published_count,
+    schedule_allows_job,
+)
+from jobs.services.automation_run import claim_automation_run, finish_automation_run
+from jobs.services.utils import safe_error_message
 
 
 class Command(BaseCommand):
@@ -16,76 +32,76 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--limit', type=int, default=50)
         parser.add_argument('--no-telegram', action='store_true')
+        parser.add_argument('--run-id', type=int)
 
     def handle(self, *args, **opts):
         now = timezone.now()
+        run = AutomationRun.objects.filter(pk=opts.get('run_id')).first() if opts.get('run_id') else None
+        if opts.get('run_id') and not run:
+            raise CommandError('The requested automation run does not exist.')
+        if run is None:
+            run = claim_automation_run()
+            if run is None:
+                self.stdout.write(self.style.WARNING('Another automation cycle is already active.'))
+                return
 
-        control, _ = AutomationControl.objects.get_or_create(
-            pk=1,
-            defaults={'enabled': True, 'frequency_minutes': 15},
-        )
+        control = AutomationControl.objects.get(pk=1)
+        if control.active_run_id != run.pk:
+            raise CommandError('This automation run does not own the active worker lease.')
 
-        if not control.enabled:
-            self.stdout.write(self.style.WARNING('Automation is disabled.'))
-            retu
-
-
-        if control.frequency_minutes == 0:
-            self.stdout.write(
-                self.style.WARNING('Automation is set to Manual only.')
-            )
-            retu
-
-
-        if control.last_run_at:
-            next_allowed = control.last_run_at + timedelta(
-                minutes=control.frequency_minutes
-            )
-
-            if now < next_allowed:
-                remaining = next_allowed - now
-                self.stdout.write(
-                    self.style.WARNING(
-                        f'Automation skipped. Next run in {remaining}.'
-                    )
-                )
-                control.next_run_at = next_allowed
-                control.save(update_fields=['next_run_at'])
-                retu
-
-
-        control.last_run_at = now
-        control.next_run_at = now + timedelta(
-            minutes=control.frequency_minutes
-        )
-        control.last_error = ''
-        control.save(
-            update_fields=[
-                'last_run_at',
-                'next_run_at',
-                'last_error',
-                'updated_at',
-            ]
-        )
-
-        schedule = get_active_schedule(now)
-        if not schedule:
-            self.stdout.write(self.style.WARNING('No active automation schedule.'))
-            retu
-
-
-        schedule_published = get_schedule_published_count(schedule, now)
-        remaining_window = max(0, schedule.max_jobs - schedule_published)
-        daily_published = TelegramNotification.objects.filter(status='sent', sent_at__date=timezone.localdate()).values('job_id').distinct().count()
-        daily_remaining = max(0, control.daily_max_jobs - daily_published) if control.daily_max_jobs else opts['limit']
-        cycle_limit = min(opts['limit'], schedule.max_jobs_per_run, remaining_window, daily_remaining)
-        if cycle_limit <= 0:
-            self.stdout.write(self.style.WARNING('Schedule or daily job limit reached.'))
-            retu
-
-        run = AutomationRun.objects.create(command='automation_cycle')
-
+        run.status = 'running'
+        run.started_at = now
+        run.save(update_fields=['status', 'started_at'])
         try:
+            if not control.enabled:
+                self.stdout.write(self.style.WARNING('Automation is disabled.'))
+                finish_automation_run(run, 'skipped')
+                return
+
+            if control.frequency_minutes == 0:
+                self.stdout.write(self.style.WARNING('Automation is set to Manual only.'))
+                finish_automation_run(run, 'skipped')
+                return
+
+            if control.last_run_at:
+                next_allowed = control.last_run_at + timedelta(minutes=control.frequency_minutes)
+                if now < next_allowed:
+                    remaining = next_allowed - now
+                    control.next_run_at = next_allowed
+                    control.save(update_fields=['next_run_at', 'updated_at'])
+                    self.stdout.write(self.style.WARNING(f'Automation skipped. Next run in {remaining}.'))
+                    finish_automation_run(run, 'skipped')
+                    return
+
+            control.last_run_at = now
+            control.next_run_at = now + timedelta(minutes=control.frequency_minutes)
+            control.last_error = ''
+            control.save(update_fields=['last_run_at', 'next_run_at', 'last_error', 'updated_at'])
+
+            schedule = get_active_schedule(now)
+            if not schedule:
+                self.stdout.write(self.style.WARNING('No active automation schedule.'))
+                finish_automation_run(run, 'skipped')
+                return
+
+            schedule_published = get_schedule_published_count(schedule, now)
+            remaining_window = max(0, schedule.max_jobs - schedule_published)
+            day_start, day_end = get_automation_day_bounds(now)
+            local_today = day_start.date()
+            daily_published = TelegramNotification.objects.filter(
+                status='sent', sent_at__gte=day_start, sent_at__lt=day_end,
+            ).values('job_id').distinct().count()
+            daily_remaining = (
+                max(0, control.daily_max_jobs - daily_published)
+                if control.daily_max_jobs else opts['limit']
+            )
+            publication_limit = min(
+                opts['limit'],
+                schedule.max_jobs_per_run,
+                remaining_window,
+                daily_remaining,
+            )
+
             for source in JobSource.objects.filter(enabled=True):
                 try:
                     if source.source_type == 'website' and hasattr(
@@ -102,6 +118,7 @@ class Command(BaseCommand):
                         continue
 
                     run.collected += len(raws)
+                    run.save(update_fields=['collected'])
 
                     source.last_run_at = timezone.now()
                     source.last_error = ''
@@ -111,44 +128,79 @@ class Command(BaseCommand):
 
                 except Exception as exc:
                     run.failed += 1
+                    run.error_message = safe_error_message(f'{source.name}: {exc}')
+                    run.save(update_fields=['failed', 'error_message'])
                     source.last_run_at = timezone.now()
-                    source.last_error = str(exc)
+                    source.last_error = safe_error_message(exc)
                     source.save(
                         update_fields=['last_run_at', 'last_error']
                     )
-                    self.stderr.write(
-                        f'{source.name}: {exc}'
-                    )
+                    self.stderr.write(f'{source.name}: {safe_error_message(exc)}')
 
+            stale_before = now - timedelta(hours=1)
+            RawJobPost.objects.filter(
+                status='processing',
+                discovered_at__lt=stale_before,
+            ).update(status='new')
+            RawJobPost.objects.filter(
+                status='failed',
+                attempts__lt=3,
+            ).update(status='new')
+
+            jobs_to_publish = {}
             for raw in RawJobPost.objects.filter(
                 status='new'
-            ).order_by('discovered_at')[:cycle_limit]:
-
-                job = process_raw(raw)
+            ).order_by('discovered_at')[:opts['limit']]:
+                try:
+                    job = process_raw(raw)
+                except Exception as exc:
+                    raw.status = 'failed'
+                    raw.last_error = safe_error_message(exc)
+                    raw.save(update_fields=['status', 'last_error'])
+                    run.failed += 1
+                    run.error_message = safe_error_message(exc)
+                    run.save(update_fields=['failed', 'error_message'])
+                    continue
 
                 if raw.status == 'processed':
                     run.processed += 1
+                    if job:
+                        jobs_to_publish[job.pk] = job
                 elif raw.status == 'rejected':
                     run.rejected += 1
                 elif raw.status == 'duplicate':
                     run.duplicates += 1
                 elif raw.status == 'failed':
                     run.failed += 1
-                if (
-                    job
-                    and schedule_allows_job(schedule, job)
-                    and not opts['no_telegram']
-                    and not job.telegram_notification_sent_at
-                ):
+                run.save(update_fields=['processed', 'rejected', 'duplicates', 'failed'])
+
+            if not opts['no_telegram'] and publication_limit > 0:
+                expired_or_missing_deadline = Q(deadline__isnull=True) | Q(deadline__gte=local_today)
+                pending_jobs = Job.objects.filter(
+                    auto_imported=True,
+                    telegram_notification_sent_at__isnull=True,
+                ).filter(expired_or_missing_deadline).order_by('posted_date')[:opts['limit']]
+                for job in pending_jobs:
+                    jobs_to_publish.setdefault(job.pk, job)
+
+                if schedule.destinations.exists():
+                    destinations = list(schedule.destinations.filter(enabled=True))
+                else:
+                    destinations = None
+
+                for job in jobs_to_publish.values():
+                    if run.published >= publication_limit:
+                        break
+                    if not schedule_allows_job(schedule, job):
+                        continue
                     try:
-                        destinations = list(schedule.destinations.filter(enabled=True))
                         send_job(job, destinations=destinations)
                         run.published += 1
                     except Exception as exc:
                         run.failed += 1
-                        self.stderr.write(
-                            f'Telegram: {exc}'
-                        )
+                        run.error_message = safe_error_message(exc)
+                        self.stderr.write(f'Telegram: {run.error_message}')
+                    run.save(update_fields=['published', 'failed', 'error_message'])
 
             run.finished_at = timezone.now()
             run.summary = (
@@ -159,16 +211,32 @@ class Command(BaseCommand):
                 f'duplicates={run.duplicates}, '
                 f'failed={run.failed}'
             )
-            run.save()
+            run.status = 'failed' if run.failed else 'success'
+            run.save(update_fields=[
+                'finished_at', 'summary', 'status', 'collected', 'processed',
+                'published', 'rejected', 'duplicates', 'failed', 'error_message',
+            ])
+            AutomationSchedule.objects.filter(pk=schedule.pk).update(
+                last_run_at=run.finished_at,
+                jobs_published=schedule.jobs_published + run.published,
+            )
+            finish_automation_run(run, run.status, run.error_message)
 
             self.stdout.write(
                 self.style.SUCCESS(run.summary)
             )
 
         except Exception as exc:
-            control.last_error = str(exc)
-            control.save(update_fields=['last_error', 'updated_at'])
-            raise
+            run.failed += 1
+            run.error_message = safe_error_message(exc)
+            run.summary = (
+                f'collected={run.collected}, processed={run.processed}, '
+                f'published={run.published}, rejected={run.rejected}, '
+                f'duplicates={run.duplicates}, failed={run.failed}'
+            )
+            run.save(update_fields=['failed', 'error_message', 'summary'])
+            finish_automation_run(run, 'failed', run.error_message)
+            raise CommandError(run.error_message) from None
 
 
 

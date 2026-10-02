@@ -1,11 +1,14 @@
 import os
 import re
+from datetime import timedelta
 
 import requests
+from django.db.models import F, Q
 from django.urls import reverse
 from django.utils import timezone
 
 from ..models import TelegramDestination, TelegramNotification
+from .utils import safe_error_message
 
 
 def public_job_url(job, request=None):
@@ -17,7 +20,7 @@ def public_job_url(job, request=None):
     return (
         os.getenv(
             'PUBLIC_BASE_URL',
-            'https://afrijob.world'
+            'https://www.afrijob.world'
         ).rstrip('/')
         + path
     )
@@ -193,22 +196,7 @@ def _telegram_summary(text, limit=650):
 
 
 def send_job_to_destination(job, destination):
-    token = os.getenv(
-        'TELEGRAM_BOT_TOKEN',
-        ''
-    ).strip()
-
-    if not token:
-        raise RuntimeError(
-            'TELEGRAM_BOT_TOKEN is required'
-        )
-
     chat = destination.channel_id.strip()
-
-    if not chat:
-        raise RuntimeError(
-            f'Telegram destination "{destination.name}" has no channel ID'
-        )
 
     # Prevent duplicate Telegram posts.
     existing = TelegramNotification.objects.filter(
@@ -220,105 +208,123 @@ def send_job_to_destination(job, destination):
     if existing:
         return existing
 
-    summary = _telegram_summary(
-        job.description,
-        limit=650
-    )
-
-    job_type = (
-        job.get_job_type_display()
-        if hasattr(job, 'get_job_type_display')
-        else job.job_type
-    )
-
-    experience = (
-        job.get_experience_level_display()
-        if hasattr(job, 'get_experience_level_display')
-        else job.experience_level
-    )
-
-    salary = (
-        job.salary.strip()
-        if job.salary and job.salary.strip()
-        else 'Not specified'
-    )
-
-    lines = [
-        '🚨 NEW JOB OPPORTUNITY',
-        '',
-        f'💼 Position: {job.title}',
-        f'🏢 Company: {job.company_name}',
-        f'📍 Location: {job.location}',
-        f'🕐 Job Type: {job_type}',
-        f'🎓 Experience: {experience}',
-        f'💰 Salary: {salary}',
-        '',
-    ]
-
-    if summary:
-        lines.extend([
-            '📝 Summary:',
-            summary,
-            '',
-        ])
-
-    if job.deadline:
-        deadline = job.deadline.strftime('%B %d, %Y')
-        lines.extend([
-            f'⏰ Deadline: {deadline}',
-            '',
-        ])
-
-    lines.extend([
-        '👉 Full Details & Apply:',
-        public_job_url(job),
-    ])
-
-    text = '\n'.join(lines)
-
-    response = requests.post(
-        f'https://api.telegram.org/bot{token}/sendMessage',
-        json={
-            'chat_id': chat,
-            'text': text,
-            'disable_web_page_preview': False,
-        },
-        timeout=30,
-    )
-
-    response.raise_for_status()
-
-    data = response.json()
-    if not data.get('ok'):
-        raise RuntimeError(
-            data.get(
-                'description',
-                'Telegram API error'
-            )
-        )
-
-    message = data['result']
-
     notification, _ = TelegramNotification.objects.get_or_create(
         job=job,
         destination=destination,
+        defaults={'channel_id': chat},
     )
+    now = timezone.now()
+    claimed = TelegramNotification.objects.filter(pk=notification.pk).filter(
+        Q(status__in=['pending', 'failed'])
+        | Q(status='sending', last_attempt_at__lt=now - timedelta(minutes=5))
+    ).update(
+        channel_id=chat,
+        attempts=F('attempts') + 1,
+        status='sending',
+        last_error='',
+        last_attempt_at=now,
+    )
+    notification.refresh_from_db()
+    if not claimed:
+        if notification.status == 'sent':
+            return notification
+        raise RuntimeError('Telegram destination notification is already in progress.')
 
-    notification.channel_id = chat
-    notification.message_id = message.get('message_id')
-    notification.message_text = text
-    notification.status = 'sent'
-    notification.sent_at = timezone.now()
-    notification.last_error = ''
-    notification.attempts += 1
-    notification.save()
+    try:
+        token = os.getenv('TELEGRAM_BOT_TOKEN', '').strip()
+        if not token:
+            raise RuntimeError('TELEGRAM_BOT_TOKEN is required')
+        if not chat:
+            raise RuntimeError(f'Telegram destination "{destination.name}" has no channel ID')
 
-    return notification
+        summary = _telegram_summary(job.description, limit=650)
+
+        job_type = (
+            job.get_job_type_display()
+            if hasattr(job, 'get_job_type_display')
+            else job.job_type
+        )
+
+        experience = (
+            job.get_experience_level_display()
+            if hasattr(job, 'get_experience_level_display')
+            else job.experience_level
+        )
+
+        salary = (
+            job.salary.strip()
+            if job.salary and job.salary.strip()
+            else 'Not specified'
+        )
+
+        lines = [
+            '🚨 NEW JOB OPPORTUNITY',
+            '',
+            f'💼 Position: {job.title}',
+            f'🏢 Company: {job.company_name}',
+            f'📍 Location: {job.location}',
+            f'🕐 Job Type: {job_type}',
+            f'🎓 Experience: {experience}',
+            f'💰 Salary: {salary}',
+            '',
+        ]
+
+        if summary:
+            lines.extend(['📝 Summary:', summary, ''])
+
+        if job.deadline:
+            deadline = job.deadline.strftime('%B %d, %Y')
+            lines.extend([f'⏰ Deadline: {deadline}', ''])
+
+        lines.extend(['👉 Full Details & Apply:', public_job_url(job)])
+
+        text = '\n'.join(lines)
+
+        response = requests.post(
+            f'https://api.telegram.org/bot{token}/sendMessage',
+            json={
+                'chat_id': chat,
+                'text': text,
+                'disable_web_page_preview': False,
+            },
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+        if not data.get('ok'):
+            raise RuntimeError(data.get('description', 'Telegram API error'))
+
+        message = data['result']
+
+        notification.message_id = message.get('message_id')
+        notification.message_text = text
+        notification.status = 'sent'
+        notification.sent_at = timezone.now()
+        notification.last_error = ''
+        notification.save(update_fields=[
+            'message_id', 'message_text', 'status', 'sent_at', 'last_error',
+        ])
+
+        return notification
+    except Exception as exc:
+        notification.status = 'failed'
+        notification.last_error = safe_error_message(exc)
+        notification.save(update_fields=['status', 'last_error'])
+        raise RuntimeError(notification.last_error)
+
 
 
 def send_job(job, destinations=None):
     if destinations is None:
         destinations = get_job_destinations(job)
+    else:
+        destinations = [
+            destination
+            for destination in destinations
+            if destination.enabled and destination_allows_job(destination, job)
+        ]
     if not destinations:
         raise RuntimeError(
             f'No enabled Telegram destination is allowed for job {job.pk}.'
@@ -340,18 +346,18 @@ def send_job(job, destinations=None):
                 f'{destination.name}: {exc}'
             )
 
+    if errors:
+        raise RuntimeError(
+            'Telegram delivery incomplete: '
+            + '; '.join(errors)
+        )
+
     if notifications:
         job.telegram_notification_sent_at = timezone.now()
         job.save(
             update_fields=[
                 'telegram_notification_sent_at'
             ]
-        )
-
-    if errors and not notifications:
-        raise RuntimeError(
-            'All Telegram destinations failed: '
-            + '; '.join(errors)
         )
 
     return notifications

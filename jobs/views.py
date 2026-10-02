@@ -1,6 +1,8 @@
 import os
+import hmac
 import subprocess
 import sys
+from pathlib import Path
 
 from django.views.decorators.http import require_GET
 from django.contrib import messages
@@ -9,10 +11,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import F, Q
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from urllib.parse import urlparse
 from .forms import ContactMessageForm
 from .models import BlogPost, Job, JobCategory, Advertisement, CustomPage, LegalPage, SiteSetting
+from .services.automation_run import claim_automation_run, finish_automation_run
 
 
 @staff_member_required
@@ -185,19 +189,54 @@ def custom_page(request, slug):
 
 @require_GET
 def automation_trigger(request):
-    secret = os.environ.get("AUTOMATION_SECRET", "")
+    secret = os.environ.get('AUTOMATION_SECRET', '')
+    provided_secret = request.headers.get('X-Automation-Secret') or request.GET.get('key', '')
 
-    if not secret or request.GET.get("key") != secret:
-        return JsonResponse({"error": "Unauthorized"}, status=401)
+    if not secret or not hmac.compare_digest(
+        provided_secret.encode('utf-8'),
+        secret.encode('utf-8'),
+    ):
+        return JsonResponse({'error': 'Unauthorized'}, status=401)
 
-    subprocess.Popen(
-        [sys.executable, "manage.py", "automation_cycle"],
-        cwd=os.getcwd(),
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    run = claim_automation_run()
+    if run is None:
+        return JsonResponse(
+            {'status': 'already_running', 'message': 'An automation cycle is already active.'},
+            status=409,
+        )
+
+    log_path = Path(os.environ.get(
+        'AUTOMATION_LOG_FILE',
+        settings.BASE_DIR / 'logs' / f'automation-{timezone.localdate().isoformat()}.log',
+    ))
+    if not log_path.is_absolute():
+        log_path = settings.BASE_DIR / log_path
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open('a', encoding='utf-8') as worker_log:
+            subprocess.Popen(
+                [
+                    sys.executable,
+                    str(settings.BASE_DIR / 'manage.py'),
+                    'automation_cycle',
+                    '--run-id',
+                    str(run.pk),
+                ],
+                cwd=str(settings.BASE_DIR),
+                stdin=subprocess.DEVNULL,
+                stdout=worker_log,
+                stderr=subprocess.STDOUT,
+                close_fds=True,
+            )
+    except Exception as exc:
+        finish_automation_run(run, 'failed', exc)
+        return JsonResponse(
+            {'status': 'failed', 'message': 'Automation worker could not be started.'},
+            status=503,
+        )
 
     return JsonResponse({
-        "status": "started",
-        "message": "AFRIJOB automation cycle started",
+        'status': 'started',
+        'run_id': run.pk,
+        'message': 'AFRIJOB automation cycle started',
     })

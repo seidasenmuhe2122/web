@@ -1,5 +1,12 @@
+from datetime import datetime, time, timedelta, timezone as datetime_timezone
+from io import StringIO
+import os
+import tempfile
+from unittest.mock import Mock, patch
+
 from django.core import mail
 from django.core.cache import cache
+from django.core.management import call_command
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_login_failed
@@ -13,9 +20,401 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .admin import AdvertisementTextWidget
-from .models import Advertisement, ContactMessage, CustomPage, Job, LegalPage, SiteSetting
+from .models import (
+    Advertisement,
+    AutomationControl,
+    AutomationRun,
+    AutomationSchedule,
+    ContactMessage,
+    CustomPage,
+    Job,
+    JobSource,
+    LegalPage,
+    RawJobPost,
+    SiteSetting,
+    TelegramDestination,
+    TelegramNotification,
+    WebsiteSource,
+)
+from .services.collectors import collect_website, save_raw
+from .services.processor import process_raw
+from .services.telegram_service import send_job, send_job_to_destination
+from .services.scheduler_service import automation_timezone, get_active_schedule
 from .templatetags.security_tags import sanitize_ad_code, sanitize_html
 from jopportal.middleware import RateLimitMiddleware
+
+
+class AutomationCycleTests(TestCase):
+    def test_processes_batch_beyond_publish_quota_and_recovers_stale_posts(self):
+        source = JobSource.objects.create(name='Test website', source_type='website')
+        WebsiteSource.objects.create(source=source, url='https://example.com/jobs')
+        AutomationSchedule.objects.create(
+            name='Test schedule',
+            start_time=time.min,
+            end_time=time.max,
+            max_jobs=5,
+            max_jobs_per_run=1,
+        )
+        fresh_posts = [
+            RawJobPost.objects.create(
+                source=source,
+                external_id=f'fresh-{index}',
+                content=f'Fresh post {index}',
+                content_hash=f'{index:064d}',
+            )
+            for index in range(2)
+        ]
+        stale_post = RawJobPost.objects.create(
+            source=source,
+            external_id='stale',
+            content='Interrupted post',
+            content_hash='3' * 64,
+            status='processing',
+            discovered_at=timezone.now() - timedelta(hours=2),
+        )
+        publication_job = Job.objects.create(
+            title='Eligible job',
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='A current vacancy.',
+            auto_imported=True,
+        )
+
+        def process(raw):
+            raw.status = 'processed' if raw.pk == fresh_posts[0].pk else 'rejected'
+            raw.save(update_fields=['status'])
+            return publication_job if raw.status == 'processed' else None
+
+        with patch(
+            'jobs.management.commands.automation_cycle.collect_website',
+            return_value=fresh_posts,
+        ), patch(
+            'jobs.management.commands.automation_cycle.process_raw',
+            side_effect=process,
+        ) as process_raw, patch(
+            'jobs.management.commands.automation_cycle.send_job',
+        ) as send_job_mock:
+            call_command('automation_cycle', stdout=StringIO())
+
+        self.assertEqual(process_raw.call_count, 3)
+        send_job_mock.assert_called_once()
+        run = AutomationRun.objects.get(command='automation_cycle')
+        self.assertEqual(run.collected, 2)
+        self.assertEqual(run.processed, 1)
+        self.assertEqual(run.rejected, 2)
+        self.assertEqual(run.published, 1)
+        self.assertEqual(AutomationControl.objects.get().daily_max_jobs, 0)
+        stale_post.refresh_from_db()
+        self.assertEqual(stale_post.status, 'rejected')
+
+    def test_collector_creates_raw_post_with_new_status(self):
+        source = JobSource.objects.create(name='Collector status source', source_type='website')
+
+        raw = save_raw(source, 'A valid collected vacancy', external_id='source-item-1')
+
+        self.assertEqual(raw.status, 'new')
+
+    @patch('jobs.services.processor.extract_job')
+    def test_processor_creates_job_and_marks_repeated_job_duplicate(self, extract_job):
+        source = JobSource.objects.create(name='Processor source', source_type='website')
+        data = {
+            'is_job': True,
+            'title': 'Field Officer',
+            'company': 'Example NGO',
+            'location': 'Addis Ababa',
+            'description': 'Manage field programs.',
+            'category': 'NGO',
+            'job_type': 'Full-time',
+            'experience': '1-3 Years',
+            'application_url': 'https://example.com/apply/123',
+            'source_url': 'https://example.com/jobs/123',
+            'requirements': [],
+            'responsibilities': [],
+            'deadline': '',
+        }
+        extract_job.return_value = data
+        first = RawJobPost.objects.create(
+            source=source,
+            external_id='job-1',
+            content='Field Officer vacancy details',
+            content_hash='a' * 64,
+        )
+        second = RawJobPost.objects.create(
+            source=source,
+            external_id='job-2',
+            content='Field Officer vacancy details',
+            content_hash='b' * 64,
+        )
+
+        job = process_raw(first)
+        duplicate = process_raw(second)
+
+        first.refresh_from_db()
+        second.refresh_from_db()
+        self.assertIsNotNone(job)
+        self.assertEqual(first.status, 'processed')
+        self.assertEqual(job.apply_link, data['application_url'])
+        self.assertEqual(job.source_url, data['source_url'])
+        self.assertEqual(duplicate.pk, job.pk)
+        self.assertEqual(second.status, 'duplicate')
+        self.assertEqual(second.job_id, job.pk)
+
+    @patch('jobs.services.processor.extract_job')
+    def test_ai_failure_is_recorded_on_raw_post_and_processing_log(self, extract_job):
+        extract_job.side_effect = RuntimeError('GROQ_API_KEY=provider-secret')
+        raw = RawJobPost.objects.create(
+            external_id='ai-failure',
+            content='A collected vacancy',
+            content_hash='c' * 64,
+        )
+
+        with patch.dict(os.environ, {'GROQ_API_KEY': 'provider-secret'}):
+            result = process_raw(raw)
+
+        raw.refresh_from_db()
+        self.assertIsNone(result)
+        self.assertEqual(raw.status, 'failed')
+        self.assertIn('[redacted]', raw.last_error)
+        self.assertNotIn('provider-secret', raw.last_error)
+        self.assertTrue(raw.logs.filter(stage='system', status='failed').exists())
+
+    @patch('jobs.services.processor.extract_job')
+    def test_expired_job_is_rejected_before_creation(self, extract_job):
+        extract_job.return_value = {
+            'is_job': True,
+            'title': 'Expired vacancy',
+            'company': 'Example Company',
+            'location': 'Addis Ababa',
+            'description': 'This application is closed.',
+            'deadline': (
+                timezone.localtime(timezone.now(), automation_timezone()).date() - timedelta(days=1)
+            ).isoformat(),
+        }
+        raw = RawJobPost.objects.create(
+            external_id='expired-job',
+            content='An expired vacancy',
+            content_hash='d' * 64,
+        )
+
+        result = process_raw(raw)
+
+        raw.refresh_from_db()
+        self.assertIsNone(result)
+        self.assertEqual(raw.status, 'rejected')
+        self.assertIn('deadline has already passed', raw.rejection_reason)
+        self.assertFalse(Job.objects.filter(title='Expired vacancy').exists())
+
+    def test_website_collector_rejects_private_network_targets(self):
+        source = JobSource.objects.create(name='Private URL source', source_type='website')
+        config = WebsiteSource.objects.create(
+            source=source,
+            url='http://127.0.0.1/internal',
+        )
+
+        with self.assertRaisesRegex(ValueError, 'non-public network'):
+            collect_website(config)
+
+    def test_trigger_requires_secret_and_refuses_overlapping_runs(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            log_path = os.path.join(temporary_directory, 'automation.log')
+            with patch.dict(os.environ, {
+                'AUTOMATION_SECRET': 'test-trigger-secret',
+                'AUTOMATION_LOG_FILE': log_path,
+            }), patch('jobs.views.subprocess.Popen') as popen:
+                unauthorized = self.client.get('/automation-trigger/?key=wrong')
+                self.assertEqual(unauthorized.status_code, 401)
+                self.assertEqual(AutomationRun.objects.count(), 0)
+
+                started = self.client.get('/automation-trigger/?key=test-trigger-secret')
+                self.assertEqual(started.status_code, 200)
+                self.assertEqual(started.json()['status'], 'started')
+                self.assertNotIn('test-trigger-secret', started.content.decode())
+
+                overlapping = self.client.get('/automation-trigger/?key=test-trigger-secret')
+                self.assertEqual(overlapping.status_code, 409)
+                self.assertEqual(popen.call_count, 1)
+                self.assertEqual(AutomationRun.objects.get().status, 'queued')
+
+    def test_trigger_records_worker_start_failure_without_exposing_secret(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            with patch.dict(os.environ, {
+                'AUTOMATION_SECRET': 'test-trigger-secret',
+                'AUTOMATION_LOG_FILE': os.path.join(temporary_directory, 'automation.log'),
+            }), patch(
+                'jobs.views.subprocess.Popen',
+                side_effect=OSError('cannot launch test-trigger-secret'),
+            ):
+                response = self.client.get('/automation-trigger/?key=test-trigger-secret')
+
+        self.assertEqual(response.status_code, 503)
+        self.assertNotIn('test-trigger-secret', response.content.decode())
+        run = AutomationRun.objects.get()
+        self.assertEqual(run.status, 'failed')
+        self.assertNotIn('test-trigger-secret', run.error_message)
+        self.assertIsNone(AutomationControl.objects.get().active_run_id)
+
+    def test_inactive_schedule_skips_collection(self):
+        source = JobSource.objects.create(name='Inactive source', source_type='website')
+        WebsiteSource.objects.create(source=source, url='https://example.com/jobs')
+
+        with patch(
+            'jobs.management.commands.automation_cycle.collect_website',
+        ) as collect_website:
+            call_command('automation_cycle', stdout=StringIO())
+
+        collect_website.assert_not_called()
+        self.assertEqual(AutomationRun.objects.get().status, 'skipped')
+
+    def test_schedule_uses_addis_ababa_local_time(self):
+        AutomationSchedule.objects.create(
+            name='Ethiopia evening',
+            start_time=time(19, 30),
+            end_time=time(23, 31),
+            max_jobs=500,
+            max_jobs_per_run=10,
+        )
+        before_start = datetime(2026, 10, 2, 16, 29, tzinfo=datetime_timezone.utc)
+        at_start = datetime(2026, 10, 2, 16, 30, tzinfo=datetime_timezone.utc)
+
+        self.assertIsNone(get_active_schedule(before_start))
+        self.assertIsNotNone(get_active_schedule(at_start))
+
+    def test_daily_publication_limit_stops_sending_but_not_the_cycle(self):
+        AutomationSchedule.objects.create(
+            name='Daily limit schedule',
+            start_time=time.min,
+            end_time=time.max,
+            max_jobs=10,
+            max_jobs_per_run=10,
+        )
+        control = AutomationControl.objects.create(pk=1, daily_max_jobs=1)
+        sent_job = Job.objects.create(
+            title='Already sent',
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='Previously sent vacancy.',
+        )
+        TelegramNotification.objects.create(
+            job=sent_job,
+            channel_id='@already_sent',
+            status='sent',
+            sent_at=timezone.now(),
+        )
+        pending_job = Job.objects.create(
+            title='Pending send',
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='Waiting vacancy.',
+            auto_imported=True,
+        )
+
+        with patch('jobs.management.commands.automation_cycle.send_job') as send_job_mock:
+            call_command('automation_cycle', stdout=StringIO())
+
+        send_job_mock.assert_not_called()
+        run = AutomationRun.objects.get()
+        self.assertEqual(run.status, 'success')
+        self.assertEqual(run.published, 0)
+        self.assertEqual(control.daily_max_jobs, 1)
+        self.assertIsNone(pending_job.telegram_notification_sent_at)
+
+    def test_one_source_failure_does_not_stop_other_sources(self):
+        AutomationSchedule.objects.create(
+            name='Source isolation schedule',
+            start_time=time.min,
+            end_time=time.max,
+            max_jobs=10,
+            max_jobs_per_run=2,
+        )
+        first_source = JobSource.objects.create(name='Failing source', source_type='website')
+        second_source = JobSource.objects.create(name='Healthy source', source_type='website')
+        WebsiteSource.objects.create(source=first_source, url='https://first.example/jobs')
+        WebsiteSource.objects.create(source=second_source, url='https://second.example/jobs')
+        calls = []
+
+        def collect(config):
+            calls.append(config.source.name)
+            if config.source_id == first_source.pk:
+                raise RuntimeError('source unavailable')
+            return []
+
+        with patch(
+            'jobs.management.commands.automation_cycle.collect_website',
+            side_effect=collect,
+        ):
+            call_command('automation_cycle', stdout=StringIO(), stderr=StringIO())
+
+        self.assertEqual(len(calls), 2)
+        run = AutomationRun.objects.get()
+        self.assertEqual(run.failed, 1)
+        self.assertEqual(run.status, 'failed')
+
+    def test_partial_telegram_failure_is_recorded_and_retried(self):
+        job = Job.objects.create(
+            title='Field Officer',
+            company_name='Example NGO',
+            location='Addis Ababa',
+            description='Manage field programs.',
+            auto_imported=True,
+        )
+        first_destination = TelegramDestination.objects.create(
+            name='First channel', channel_id='@first_channel',
+        )
+        second_destination = TelegramDestination.objects.create(
+            name='Second channel', channel_id='@second_channel',
+        )
+        sent_response = Mock()
+        sent_response.raise_for_status.return_value = None
+        sent_response.json.return_value = {
+            'ok': True,
+            'result': {'message_id': 123},
+        }
+
+        with patch.dict(os.environ, {'TELEGRAM_BOT_TOKEN': '123456:secret-token'}), patch(
+            'jobs.services.telegram_service.requests.post',
+            side_effect=[RuntimeError('123456:secret-token unavailable'), sent_response, sent_response],
+        ) as post:
+            with self.assertRaisesRegex(RuntimeError, 'delivery incomplete'):
+                send_job(job, [first_destination, second_destination])
+
+            statuses = dict(TelegramNotification.objects.values_list('destination__name', 'status'))
+            self.assertEqual(statuses, {'First channel': 'failed', 'Second channel': 'sent'})
+            job.refresh_from_db()
+            self.assertIsNone(job.telegram_notification_sent_at)
+            self.assertNotIn('123456:secret-token', TelegramNotification.objects.get(
+                destination=first_destination,
+            ).last_error)
+
+            send_job(job, [first_destination, second_destination])
+
+        job.refresh_from_db()
+        self.assertIsNotNone(job.telegram_notification_sent_at)
+        self.assertEqual(post.call_count, 3)
+
+    def test_in_flight_telegram_notification_is_not_sent_twice(self):
+        job = Job.objects.create(
+            title='Concurrent job',
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='A vacancy.',
+        )
+        destination = TelegramDestination.objects.create(
+            name='Concurrent channel',
+            channel_id='@concurrent_channel',
+        )
+        TelegramNotification.objects.create(
+            job=job,
+            destination=destination,
+            channel_id=destination.channel_id,
+            status='sending',
+            last_attempt_at=timezone.now(),
+        )
+
+        with patch('jobs.services.telegram_service.requests.post') as post:
+            with self.assertRaisesRegex(RuntimeError, 'already in progress'):
+                send_job_to_destination(job, destination)
+
+        post.assert_not_called()
 
 
 class SecurityTests(TestCase):

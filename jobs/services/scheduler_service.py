@@ -1,13 +1,26 @@
 from datetime import datetime, time, timedelta
+import os
+from zoneinfo import ZoneInfo
 
 from django.utils import timezone
 
 from ..models import AutomationSchedule, TelegramNotification
 
 
+def automation_timezone():
+    return ZoneInfo(os.getenv('AUTOMATION_TIME_ZONE', 'Africa/Addis_Ababa'))
+
+
+def get_automation_day_bounds(now=None):
+    zone = automation_timezone()
+    local_now = timezone.localtime(now or timezone.now(), zone)
+    local_midnight = datetime.combine(local_now.date(), time.min, tzinfo=zone)
+    return local_midnight, local_midnight + timedelta(days=1)
+
+
 def get_active_schedule(now=None):
     now = now or timezone.now()
-    local_now = timezone.localtime(now)
+    local_now = timezone.localtime(now, automation_timezone())
     current_time = local_now.time()
     weekday = local_now.weekday()
 
@@ -17,17 +30,18 @@ def get_active_schedule(now=None):
 
     for schedule in schedules:
         days = schedule.days_of_week or []
-
-        if days and weekday not in [int(day) for day in days]:
-            continue
-
         start = schedule.start_time
         end = schedule.end_time
 
         if start <= end:
             active = start <= current_time <= end
+            schedule_weekday = weekday
         else:
             active = current_time >= start or current_time <= end
+            schedule_weekday = (weekday - 1) % 7 if current_time <= end else weekday
+
+        if days and schedule_weekday not in [int(day) for day in days]:
+            continue
 
         if active:
             return schedule
@@ -37,21 +51,16 @@ def get_active_schedule(now=None):
 
 def get_schedule_window(schedule, now=None):
     now = now or timezone.now()
-    local_now = timezone.localtime(now)
+    zone = automation_timezone()
+    local_now = timezone.localtime(now, zone)
 
     start = schedule.start_time
     end = schedule.end_time
     current_date = local_now.date()
 
     if start <= end:
-        start_dt = timezone.make_aware(
-            datetime.combine(current_date, start),
-            timezone.get_current_timezone(),
-        )
-        end_dt = timezone.make_aware(
-            datetime.combine(current_date, end),
-            timezone.get_current_timezone(),
-        )
+        start_dt = datetime.combine(current_date, start, tzinfo=zone)
+        end_dt = datetime.combine(current_date, end, tzinfo=zone)
     else:
         if local_now.time() >= start:
             start_date = current_date
@@ -60,14 +69,8 @@ def get_schedule_window(schedule, now=None):
             start_date = current_date - timedelta(days=1)
             end_date = current_date
 
-        start_dt = timezone.make_aware(
-            datetime.combine(start_date, start),
-            timezone.get_current_timezone(),
-        )
-        end_dt = timezone.make_aware(
-            datetime.combine(end_date, end),
-            timezone.get_current_timezone(),
-        )
+        start_dt = datetime.combine(start_date, start, tzinfo=zone)
+        end_dt = datetime.combine(end_date, end, tzinfo=zone)
 
     return start_dt, end_dt
 
