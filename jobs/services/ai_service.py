@@ -3,8 +3,17 @@ import os
 import time
 import requests
 
-from .utils import clean_text
+from .utils import clean_text, safe_error_message
 
+
+DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash'
+
+NULLABLE_NUMBER = {
+    'anyOf': [
+        {'type': 'number'},
+        {'type': 'null'},
+    ]
+}
 
 SCHEMA = {
     'type': 'object',
@@ -28,8 +37,8 @@ SCHEMA = {
             'type': 'array',
             'items': {'type': 'string'}
         },
-        'salary_min': {'type': ['number', 'null']},
-        'salary_max': {'type': ['number', 'null']},
+        'salary_min': NULLABLE_NUMBER,
+        'salary_max': NULLABLE_NUMBER,
         'salary_currency': {'type': 'string'},
 
         'category': {'type': 'string'},
@@ -143,8 +152,7 @@ def _gemini_request(model, text):
         ],
         'generationConfig': {
             'responseMimeType': 'application/json',
-            'responseSchema': SCHEMA,
-            'temperature': 0,
+            'responseJsonSchema': SCHEMA,
         },
     }
 
@@ -159,8 +167,14 @@ def _gemini_request(model, text):
     )
 
     if response.status_code >= 400:
+        try:
+            error_message = response.json().get('error', {}).get('message', '')
+        except ValueError:
+            error_message = ''
+        error_message = safe_error_message(error_message, limit=500)
+        detail = f': {error_message}' if error_message else ''
         raise requests.HTTPError(
-            f'{response.status_code} {response.reason}',
+            f'{response.status_code} {response.reason}{detail}',
             response=response,
         )
 
@@ -187,74 +201,63 @@ def _gemini_request(model, text):
 def call_gemini(text):
     primary_model = os.getenv(
         'GEMINI_MODEL',
-        'gemini-3.8-flash'
-    ).strip()
-
-    fallback_model = os.getenv(
-        'GEMINI_FALLBACK_MODEL',
-        'gemini-flash-lite-latest'
-    ).strip()
-
-    models = [primary_model]
-
-    if fallback_model and fallback_model != primary_model:
-        models.append(fallback_model)
+        DEFAULT_GEMINI_MODEL
+    ).strip() or DEFAULT_GEMINI_MODEL
 
     errors = []
-    for model in models:
-        for attempt in range(3):
-            try:
-                return _gemini_request(model, text)
+    for attempt in range(3):
+        try:
+            return _gemini_request(primary_model, text)
 
-            except requests.HTTPError as exc:
-                status = (
-                    exc.response.status_code
-                    if exc.response is not None
-                    else None
-                )
+        except requests.HTTPError as exc:
+            status = (
+                exc.response.status_code
+                if exc.response is not None
+                else None
+            )
 
-                errors.append(
-                    f'{model} attempt {attempt + 1}: '
-                    f'HTTP {status}'
-                )
+            errors.append(
+                f'{primary_model} attempt {attempt + 1}: '
+                f'HTTP {status}: {exc}'
+            )
 
-                if status in (429, 500, 502, 503, 504):
-                    if attempt < 2:
-                        time.sleep(2 ** attempt)
-                        continue
-
-                break
-
-            except requests.RequestException as exc:
-                errors.append(
-                    f'{model} attempt {attempt + 1}: {exc}'
-                )
-
+            if status in (429, 500, 502, 503, 504):
                 if attempt < 2:
                     time.sleep(2 ** attempt)
                     continue
 
-                break
+            break
 
-            except (ValueError, json.JSONDecodeError) as exc:
-                errors.append(
-                    f'{model} attempt {attempt + 1}: {exc}'
-                )
+        except requests.RequestException as exc:
+            errors.append(
+                f'{primary_model} attempt {attempt + 1}: {exc}'
+            )
 
-                if attempt < 2:
-                    time.sleep(2 ** attempt)
-                    continue
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+                continue
 
-                break
+            break
 
-            except Exception as exc:
-                errors.append(
-                    f'{model} attempt {attempt + 1}: {exc}'
-                )
-                break
+        except (ValueError, json.JSONDecodeError) as exc:
+            errors.append(
+                f'{primary_model} attempt {attempt + 1}: {exc}'
+            )
+
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+                continue
+
+            break
+
+        except Exception as exc:
+            errors.append(
+                f'{primary_model} attempt {attempt + 1}: {exc}'
+            )
+            break
 
     raise RuntimeError(
-        'Gemini models failed: ' + ' | '.join(errors)
+        'Gemini model failed: ' + ' | '.join(errors)
     )
 
 

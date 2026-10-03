@@ -4,6 +4,7 @@ import os
 import tempfile
 from unittest.mock import Mock, patch
 
+import requests
 from django.core import mail
 from django.core.cache import cache
 from django.core.management import call_command
@@ -20,6 +21,7 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .admin import AdvertisementTextWidget
+from .services.ai_service import SCHEMA, _gemini_request, call_gemini, extract_job
 from .models import (
     Advertisement,
     AutomationControl,
@@ -113,6 +115,155 @@ class AutomationCycleTests(TestCase):
         raw = save_raw(source, 'A valid collected vacancy', external_id='source-item-1')
 
         self.assertEqual(raw.status, 'new')
+
+    def test_processing_failure_is_reported_in_run_diagnostics(self):
+        AutomationSchedule.objects.create(
+            name='Processing failure schedule',
+            start_time=time.min,
+            end_time=time.max,
+            max_jobs=10,
+            max_jobs_per_run=2,
+        )
+        raw = RawJobPost.objects.create(
+            external_id='failed-job',
+            content='A collected vacancy',
+            content_hash='e' * 64,
+        )
+        error_message = 'All AI providers failed: Gemini returned HTTP 400.'
+        stderr = StringIO()
+
+        def fail_processing(post):
+            post.status = 'failed'
+            post.last_error = error_message
+            post.save(update_fields=['status', 'last_error'])
+            return None
+
+        with patch(
+            'jobs.management.commands.automation_cycle.process_raw',
+            side_effect=fail_processing,
+        ):
+            call_command('automation_cycle', stdout=StringIO(), stderr=stderr)
+
+        run = AutomationRun.objects.get(command='automation_cycle')
+        self.assertEqual(run.failed, 1)
+        self.assertEqual(run.error_message, error_message)
+        self.assertIn(f'Raw post {raw.pk}: {error_message}', stderr.getvalue())
+
+    @patch('jobs.services.ai_service.requests.post')
+    def test_gemini_error_includes_provider_diagnostic(self, post):
+        response = Mock(status_code=400, reason='Bad Request')
+        response.json.return_value = {
+            'error': {'message': 'The model is not supported.'},
+        }
+        post.return_value = response
+
+        with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-api-key'}):
+            with self.assertRaises(requests.HTTPError) as raised:
+                _gemini_request('unsupported-model', 'A vacancy')
+
+        self.assertIn('The model is not supported.', str(raised.exception))
+
+    @patch('jobs.services.ai_service.requests.post')
+    def test_gemini_schema_uses_nullable_numeric_salary_fields(self, post):
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            'candidates': [{'content': {'parts': [{'text': '{}'}]}}],
+        }
+        post.return_value = response
+
+        with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-api-key'}):
+            _gemini_request('gemini-3.8-flash', 'A vacancy')
+
+        payload = post.call_args.kwargs['json']
+        generation_config = payload['generationConfig']
+        request_schema = generation_config['responseJsonSchema']
+        expected = {
+            'anyOf': [
+                {'type': 'number'},
+                {'type': 'null'},
+            ]
+        }
+        for field in ('salary_min', 'salary_max'):
+            self.assertEqual(request_schema['properties'][field], expected)
+        self.assertEqual(SCHEMA['properties']['salary_min'], expected)
+        self.assertEqual(SCHEMA['properties']['salary_max'], expected)
+        self.assertEqual(request_schema, SCHEMA)
+        self.assertEqual(
+            set(request_schema['properties']),
+            {
+                'is_job', 'title', 'company', 'location', 'job_type',
+                'organization_type', 'education_level', 'employment_type',
+                'work_mode', 'region', 'country', 'languages_required',
+                'keywords', 'salary_min', 'salary_max', 'salary_currency',
+                'category', 'salary', 'deadline', 'description',
+                'requirements', 'responsibilities', 'education', 'experience',
+                'how_to_apply', 'application_url', 'contact_email',
+                'contact_phone', 'source_name', 'source_url',
+            },
+        )
+        self.assertEqual(set(request_schema['properties']), set(request_schema['required']))
+        self.assertEqual(generation_config['responseMimeType'], 'application/json')
+        self.assertNotIn('responseSchema', generation_config)
+        self.assertNotIn('temperature', generation_config)
+
+    @patch('jobs.services.ai_service.requests.post')
+    def test_gemini_default_model_is_used_by_active_provider(self, post):
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            'candidates': [{'content': {'parts': [{'text': '{}'}]}}],
+        }
+        post.return_value = response
+
+        with patch.dict(
+            os.environ,
+            {'GEMINI_API_KEY': 'test-api-key'},
+            clear=True,
+        ):
+            result = call_gemini('A vacancy')
+
+        self.assertEqual(result, {})
+        post.assert_called_once()
+        self.assertEqual(
+            post.call_args.args[0],
+            'https://generativelanguage.googleapis.com/'
+            'v1beta/models/gemini-3.8-flash:generateContent',
+        )
+
+    @patch('jobs.services.ai_service.requests.post')
+    def test_gemini_model_can_be_overridden(self, post):
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            'candidates': [{'content': {'parts': [{'text': '{}'}]}}],
+        }
+        post.return_value = response
+
+        with patch.dict(
+            os.environ,
+            {
+                'GEMINI_API_KEY': 'test-api-key',
+                'GEMINI_MODEL': 'gemini-test-override',
+            },
+            clear=True,
+        ):
+            call_gemini('A vacancy')
+
+        self.assertIn(
+            '/models/gemini-test-override:generateContent',
+            post.call_args.args[0],
+        )
+
+    def test_ai_provider_fallback_remains_intact(self):
+        gemini = Mock(side_effect=RuntimeError('Gemini unavailable'))
+        groq = Mock(return_value={'is_job': True})
+        with patch(
+            'jobs.services.ai_service.PROVIDERS',
+            [('gemini', gemini), ('groq', groq)],
+        ):
+            result = extract_job('A vacancy')
+
+        self.assertEqual(result, {'is_job': True, '_provider': 'groq'})
+        gemini.assert_called_once_with('A vacancy')
+        groq.assert_called_once_with('A vacancy')
 
     @patch('jobs.services.processor.extract_job')
     def test_processor_creates_job_and_marks_repeated_job_duplicate(self, extract_job):
@@ -263,7 +414,49 @@ class AutomationCycleTests(TestCase):
             call_command('automation_cycle', stdout=StringIO())
 
         collect_website.assert_not_called()
-        self.assertEqual(AutomationRun.objects.get().status, 'skipped')
+        run = AutomationRun.objects.get()
+        self.assertEqual(run.status, 'skipped')
+        self.assertIn('No active schedule', run.summary)
+
+    def test_recent_run_and_manual_frequency_do_not_block_cron_cycle(self):
+        control = AutomationControl.objects.create(
+            pk=1,
+            enabled=True,
+            frequency_minutes=0,
+            last_run_at=timezone.now() - timedelta(minutes=1),
+            next_run_at=timezone.now(),
+        )
+        schedule = AutomationSchedule.objects.create(
+            name='Active cron schedule',
+            enabled=True,
+            start_time=time.min,
+            end_time=time.max,
+            days_of_week=[],
+            max_jobs=5,
+            max_jobs_per_run=1,
+        )
+        source = JobSource.objects.create(name='Cron test source', source_type='website')
+        WebsiteSource.objects.create(source=source, url='https://example.com/jobs')
+
+        self.assertEqual(get_active_schedule(), schedule)
+
+        with patch(
+            'jobs.management.commands.automation_cycle.collect_website',
+            return_value=[],
+        ) as collect_website:
+            call_command(
+                'automation_cycle',
+                '--no-telegram',
+                stdout=StringIO(),
+            )
+
+        collect_website.assert_called_once()
+        run = AutomationRun.objects.get(command='automation_cycle')
+        self.assertEqual(run.status, 'success')
+        self.assertNotIn('Frequency interval has not elapsed', run.summary)
+        control.refresh_from_db()
+        self.assertGreater(control.last_run_at, timezone.now() - timedelta(minutes=1))
+        self.assertIsNone(control.next_run_at)
 
     def test_schedule_uses_addis_ababa_local_time(self):
         AutomationSchedule.objects.create(

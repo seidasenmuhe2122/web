@@ -38,6 +38,7 @@ TELEGRAM_API_ID=<telegram-api-id>
 TELEGRAM_API_HASH=<telegram-api-hash>
 TELEGRAM_SESSION_STRING=<telethon-session-string>
 GEMINI_API_KEY=<optional-gemini-key>
+GEMINI_MODEL=gemini-3.8-flash
 GROQ_API_KEY=<optional-groq-key>
 OPENROUTER_API_KEY=<optional-openrouter-key>
 ```

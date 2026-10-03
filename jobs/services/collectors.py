@@ -302,6 +302,7 @@ def collect_website(config):
     return out
 
 def collect_telegram(config):
+    from asgiref.sync import sync_to_async
     from telethon import TelegramClient
     from telethon.sessions import StringSession
 
@@ -311,12 +312,10 @@ def collect_telegram(config):
             '0',
         )
     )
-
     api_hash = os.getenv(
         'TELEGRAM_API_HASH',
         '',
     ).strip()
-
     session = os.getenv(
         'TELEGRAM_SESSION_STRING',
         '',
@@ -334,6 +333,16 @@ def collect_telegram(config):
         api_hash,
     )
 
+    save_config = sync_to_async(
+        config.save,
+        thread_sensitive=True,
+    )
+
+    save_raw_async = sync_to_async(
+        save_raw,
+        thread_sensitive=True,
+    )
+
     async def run():
         await client.start()
 
@@ -344,11 +353,7 @@ def collect_telegram(config):
 
             out = []
 
-            # First run:
-            # establish the current latest message as the
-            # starting point. Do NOT import old messages.
             if config.last_message_id <= 0:
-
                 latest_messages = []
 
                 async for msg in client.iter_messages(
@@ -356,11 +361,13 @@ def collect_telegram(config):
                     limit=1,
                 ):
                     latest_messages.append(msg)
+
+                if latest_messages:
                     config.last_message_id = (
                         latest_messages[0].id
                     )
 
-                    config.save(
+                    await save_config(
                         update_fields=[
                             'last_message_id'
                         ]
@@ -391,7 +398,7 @@ def collect_telegram(config):
                         f'https://t.me/{channel}/{msg.id}'
                     )
 
-                raw = save_raw(
+                raw = await save_raw_async(
                     config.source,
                     text,
                     external_id=msg.id,
@@ -409,7 +416,7 @@ def collect_telegram(config):
             if max_id != config.last_message_id:
                 config.last_message_id = max_id
 
-                config.save(
+                await save_config(
                     update_fields=[
                         'last_message_id'
                     ]
@@ -421,4 +428,3 @@ def collect_telegram(config):
             await client.disconnect()
 
     return asyncio.run(run())
-

@@ -52,36 +52,26 @@ class Command(BaseCommand):
         run.status = 'running'
         run.started_at = now
         run.save(update_fields=['status', 'started_at'])
+
+        def skip_run(reason):
+            run.summary = f'skipped: {reason}'
+            run.save(update_fields=['summary'])
+            finish_automation_run(run, 'skipped')
+            self.stdout.write(self.style.WARNING(reason))
+
         try:
             if not control.enabled:
-                self.stdout.write(self.style.WARNING('Automation is disabled.'))
-                finish_automation_run(run, 'skipped')
+                skip_run('Automation is disabled.')
                 return
-
-            if control.frequency_minutes == 0:
-                self.stdout.write(self.style.WARNING('Automation is set to Manual only.'))
-                finish_automation_run(run, 'skipped')
-                return
-
-            if control.last_run_at:
-                next_allowed = control.last_run_at + timedelta(minutes=control.frequency_minutes)
-                if now < next_allowed:
-                    remaining = next_allowed - now
-                    control.next_run_at = next_allowed
-                    control.save(update_fields=['next_run_at', 'updated_at'])
-                    self.stdout.write(self.style.WARNING(f'Automation skipped. Next run in {remaining}.'))
-                    finish_automation_run(run, 'skipped')
-                    return
 
             control.last_run_at = now
-            control.next_run_at = now + timedelta(minutes=control.frequency_minutes)
+            control.next_run_at = None
             control.last_error = ''
             control.save(update_fields=['last_run_at', 'next_run_at', 'last_error', 'updated_at'])
 
             schedule = get_active_schedule(now)
             if not schedule:
-                self.stdout.write(self.style.WARNING('No active automation schedule.'))
-                finish_automation_run(run, 'skipped')
+                skip_run('No active schedule for the current automation timezone, time, and weekday.')
                 return
 
             schedule_published = get_schedule_published_count(schedule, now)
@@ -172,7 +162,13 @@ class Command(BaseCommand):
                     run.duplicates += 1
                 elif raw.status == 'failed':
                     run.failed += 1
-                run.save(update_fields=['processed', 'rejected', 'duplicates', 'failed'])
+                    run.error_message = safe_error_message(
+                        raw.last_error or 'Raw post processing failed without an error message.'
+                    )
+                    self.stderr.write(f'Raw post {raw.pk}: {run.error_message}')
+                run.save(update_fields=[
+                    'processed', 'rejected', 'duplicates', 'failed', 'error_message',
+                ])
 
             if not opts['no_telegram'] and publication_limit > 0:
                 expired_or_missing_deadline = Q(deadline__isnull=True) | Q(deadline__gte=local_today)
@@ -237,8 +233,6 @@ class Command(BaseCommand):
             run.save(update_fields=['failed', 'error_message', 'summary'])
             finish_automation_run(run, 'failed', run.error_message)
             raise CommandError(run.error_message) from None
-
-
 
 
 

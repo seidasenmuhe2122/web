@@ -60,9 +60,9 @@ def process_raw(raw):
         sections = []
         if data.get('requirements'): sections.append('Requirements:\n' + '\n'.join(f'• {x}' for x in data['requirements'] if x))
         if data.get('responsibilities'): sections.append('Responsibilities:\n' + '\n'.join(f'• {x}' for x in data['responsibilities'] if x))
-        if data.get('education'): sections.append('Education:\n' + data['education'])
+        if data.get('education'): sections.append('Education:\n' + (data['education'] if isinstance(data['education'], str) else '\n'.join(str(x) for x in data['education'] if x)))
         if exp: sections.append('Experience:\n' + exp)
-        if data.get('how_to_apply'): sections.append('How to Apply:\n' + data['how_to_apply'])
+        if data.get('how_to_apply'): sections.append('How to Apply:\n' + (data['how_to_apply'] if isinstance(data['how_to_apply'], str) else '\n'.join(str(x) for x in data['how_to_apply'] if x)))
         full_desc = desc + ('\n\n' + '\n\n'.join(sections) if sections else '')
         app = (data.get('application_url') or '').strip()
         if not safe_http_url(app):
@@ -81,7 +81,15 @@ def process_raw(raw):
             source_url=source_url[:1000], original_content=raw.content, content_hash=fingerprint(data,raw.content),
             normalized_title=normalize(title)[:220], normalized_company=normalize(company)[:220], normalized_location=normalize(data.get('location'))[:160], auto_imported=True,
               organization_type=(data.get('organization_type') or '').strip()[:80],
-              education_level=(data.get('education_level') or data.get('education') or '').strip()[:80],
+              education_level=(
+    data.get('education_level')
+    if isinstance(data.get('education_level'), str)
+    else (
+        data.get('education')
+        if isinstance(data.get('education'), str)
+        else ''
+    )
+).strip()[:80],
               employment_type=(data.get('employment_type') or data.get('job_type') or '').strip()[:50],
               work_mode=(data.get('work_mode') or '').strip()[:30],
               region=(data.get('region') or '').strip()[:100],
