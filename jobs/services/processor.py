@@ -59,110 +59,119 @@ def process_raw(raw):
         exp = next((x for x in valid_exp if x.lower() in (data.get('experience') or '').lower()), 'Fresh Graduate')
         sections = []
 
-requirements = data.get('requirements') or []
-if isinstance(requirements, str):
-    requirements = [requirements]
+        requirements = data.get('requirements') or []
+        if isinstance(requirements, str):
+            requirements = [requirements]
 
-if requirements:
-    sections.append(
-        'Requirements:\n' +
-        '\n'.join(
-            f'• {str(x).strip()}'
-            for x in requirements
-            if str(x).strip()
+        if requirements:
+            sections.append(
+                'Requirements:\n' +
+                '\n'.join(
+                    f'• {str(x).strip()}'
+                    for x in requirements
+                    if str(x).strip()
+                )
+            )
+
+        responsibilities = data.get('responsibilities') or []
+        if isinstance(responsibilities, str):
+            responsibilities = [responsibilities]
+
+        if responsibilities:
+            sections.append(
+                'Responsibilities:\n' +
+                '\n'.join(
+                    f'• {str(x).strip()}'
+                    for x in responsibilities
+                    if str(x).strip()
+                )
+            )
+
+        education = data.get('education') or ''
+        if education:
+            if isinstance(education, str):
+                education_text = education.strip()
+            else:
+                education_text = '\n'.join(
+                    str(x).strip()
+                    for x in education
+                    if str(x).strip()
+                )
+
+            if education_text:
+                sections.append('Education:\n' + education_text)
+
+        if exp:
+            sections.append('Experience:\n' + str(exp).strip())
+
+        how_to_apply = data.get('how_to_apply') or ''
+        if how_to_apply:
+            if isinstance(how_to_apply, str):
+                how_to_apply_text = how_to_apply.strip()
+            else:
+                how_to_apply_text = '\n'.join(
+                    str(x).strip()
+                    for x in how_to_apply
+                    if str(x).strip()
+                )
+
+            if how_to_apply_text:
+                sections.append('How to Apply:\n' + how_to_apply_text)
+
+        full_desc = desc + ('\n\n' + '\n\n'.join(sections) if sections else '')
+
+        app = (data.get('application_url') or '').strip()
+        if not safe_http_url(app):
+            app = ''
+
+        extracted_source_url = (data.get('source_url') or '').strip()
+
+        source_url = (
+            extracted_source_url
+            if safe_http_url(extracted_source_url)
+            else raw.source_url
+            if safe_http_url(raw.source_url)
+            else ''
         )
-    )
 
-responsibilities = data.get('responsibilities') or []
-if isinstance(responsibilities, str):
-    responsibilities = [responsibilities]
-
-if responsibilities:
-    sections.append(
-        'Responsibilities:\n' +
-        '\n'.join(
-            f'• {str(x).strip()}'
-            for x in responsibilities
-            if str(x).strip()
+        job = Job.objects.create(
+            source=raw.source,
+            title=title[:200],
+            company_name=(company or '')[:200],
+            location=(data.get('location') or '')[:200],
+            job_type=jt,
+            experience_level=exp,
+            category=category,
+            salary=(data.get('salary') or '')[:200],
+            description=full_desc,
+            apply_link=app,
+            deadline=deadline,
+            source_name=(data.get('source_name') or raw.source_name or '')[:200],
+            source_url=source_url,
+            original_content=raw.content,
+            content_hash=fingerprint(data, raw.content),
+            normalized_title=normalize(title),
+            normalized_company=normalize(company),
+            normalized_location=normalize(data.get('location') or ''),
+            auto_imported=True,
+            organization_type=(data.get('organization_type') or '')[:100],
+            education_level=(data.get('education_level') or '')[:100],
+            employment_type=(data.get('employment_type') or '')[:100],
+            work_mode=(data.get('work_mode') or '')[:100],
+            region=(data.get('region') or '')[:100],
+            country=(data.get('country') or '')[:100],
+            languages_required=data.get('languages_required') or [],
+            keywords=data.get('keywords') or [],
+            salary_min=data.get('salary_min') or None,
+            salary_max=data.get('salary_max') or None,
+            salary_currency=(data.get('salary_currency') or '')[:20],
         )
-    )
-
-education = data.get('education') or ''
-if education:
-    if isinstance(education, str):
-        education_text = education.strip()
-    else:
-        education_text = '\n'.join(
-            str(x).strip()
-            for x in education
-            if str(x).strip()
-        )
-
-    if education_text:
-        sections.append('Education:\n' + education_text)
-
-if exp:
-    sections.append('Experience:\n' + str(exp).strip())
-
-how_to_apply = data.get('how_to_apply') or ''
-if how_to_apply:
-    if isinstance(how_to_apply, str):
-        how_to_apply_text = how_to_apply.strip()
-    else:
-        how_to_apply_text = '\n'.join(
-            str(x).strip()
-            for x in how_to_apply
-            if str(x).strip()
-        )
-
-    if how_to_apply_text:
-        sections.append('How to Apply:\n' + how_to_apply_text)
-
-full_desc = desc + ('\n\n' + '\n\n'.join(sections) if sections else '')
-
-app = (data.get('application_url') or '').strip()
-if not safe_http_url(app):
-    app = ''
-
-extracted_source_url = (data.get('source_url') or '').strip()
-
-source_url = (
-    extracted_source_url
-    if safe_http_url(extracted_source_url)
-    else raw.source_url
-    if safe_http_url(raw.source_url)
-    else ''
-)
-
-job = Job.objects.create(
-    source=raw.source,
-    title=title[:200],
-    company_name=(company or '')[:200],
-    location=(data.get('location') or '')[:200],
-    job_type=jt,
-    experience_level=exp,
-    category=category,
-    salary=(data.get('salary') or '')[:200],
-    description=full_desc,
-    apply_link=app,
-    deadline=deadline,
-    source_name=(data.get('source_name') or raw.source_name or '')[:200],
-    source_url=source_url,
-    original_content=raw.content,
-    content_hash=fingerprint(data, raw.content),
-    normalized_title=normalize(title),
-    normalized_company=normalize(company),
-    normalized_location=normalize(data.get('location') or ''),
-    auto_imported=True,
-    organization_type=(data.get('organization_type') or '')[:100],
-    education_level=(data.get('education_level') or '')[:100],
-    employment_type=(data.get('employment_type') or '')[:100],
-    work_mode=(data.get('work_mode') or '')[:100],
-    region=(data.get('region') or '')[:100],
-    country=(data.get('country') or '')[:100],
-    languages_required=data.get('languages_required') or [],
-    keywords=data.get('keywords') or [],
-    salary_min=data.get('salary_min') or None,
-    salary_max=data.get('salary_max') or None,
-    salary_currency=(data.get('salary_currency') or '')[:20],
-)
+        raw.status, raw.job, raw.processed_at = 'processed', job, timezone.now()
+        raw.save(update_fields=['status', 'job', 'processed_at', 'last_error'])
+        log_event(raw, 'publish', 'success', 'Job created.', job=job)
+        return job
+    except Exception as exc:
+        raw.status, raw.last_error = 'failed', safe_error_message(exc)
+        raw.save(update_fields=['status', 'last_error'])
+        log_event(raw, 'system', 'failed', raw.last_error, retry_count=raw.attempts)
+        return None

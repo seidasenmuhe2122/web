@@ -812,3 +812,33 @@ body.model-advertisement #changelist .ad-analytics-table td {
     background: var(--admin-cyan);
     border-radius: 8px;
 }
+
+@media (max-width: 768px) {
+    body.model-automationschedule .content-wrapper .form-row.field-destinations,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .field-box,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-available,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-chosen,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-chooser {
+        box-sizing: border-box !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        width: 100% !important;
+    }
+
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .field-box {
+        float: none !important;
+    }
+
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-chooser {
+        align-items: stretch !important;
+        flex-direction: column !important;
+    }
+
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-chooser button,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-add,
+    body.model-automationschedule .content-wrapper .form-row.field-destinations .selector-remove {
+        white-space: normal !important;
+        width: 100% !important;
+    }
+}
