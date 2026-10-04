@@ -23,7 +23,16 @@ from django.utils import timezone
 from django.urls import reverse
 
 from .admin import AdvertisementTextWidget, JobAdminForm
-from .services.ai_service import PROMPT, SCHEMA, _gemini_request, call_gemini, extract_job
+from .services.ai_service import (
+    AIProvidersUnavailable,
+    DEFAULT_GEMINI_MODEL,
+    PROMPT,
+    PROVIDERS,
+    SCHEMA,
+    _gemini_request,
+    call_gemini,
+    extract_job,
+)
 from .models import (
     Advertisement,
     AutomationControl,
@@ -174,7 +183,7 @@ class AutomationCycleTests(TestCase):
         post.return_value = response
 
         with patch.dict(os.environ, {'GEMINI_API_KEY': 'test-api-key'}):
-            _gemini_request('gemini-3.8-flash', 'A vacancy')
+            _gemini_request('gemini-2.5-flash-lite', 'A vacancy')
 
         payload = post.call_args.kwargs['json']
         generation_config = payload['generationConfig']
@@ -215,23 +224,40 @@ class AutomationCycleTests(TestCase):
     def test_gemini_default_model_is_used_by_active_provider(self, post):
         response = Mock(status_code=200)
         response.json.return_value = {
-            'candidates': [{'content': {'parts': [{'text': '{}'}]}}],
+            'candidates': [{
+                'content': {
+                    'parts': [{
+                        'text': (
+                            '{"is_job":true,"title":"Field Officer",'
+                            '"company":"Example NGO","location":"Addis Ababa",'
+                            '"description":"Manage field programs."}'
+                        )
+                    }]
+                }
+            }],
         }
         post.return_value = response
 
+        raw = RawJobPost.objects.create(
+            external_id='gemini-success',
+            content='Field Officer vacancy details',
+            content_hash='9' * 64,
+        )
         with patch.dict(
             os.environ,
             {'GEMINI_API_KEY': 'test-api-key'},
             clear=True,
         ):
-            result = call_gemini('A vacancy')
+            job = process_raw(raw)
 
-        self.assertEqual(result, {})
+        raw.refresh_from_db()
+        self.assertEqual(job.title, 'Field Officer')
+        self.assertEqual(raw.status, 'processed')
         post.assert_called_once()
         self.assertEqual(
             post.call_args.args[0],
             'https://generativelanguage.googleapis.com/'
-            'v1beta/models/gemini-3.8-flash:generateContent',
+            f'v1beta/models/{DEFAULT_GEMINI_MODEL}:generateContent',
         )
 
     @patch('jobs.services.ai_service.requests.post')
@@ -246,16 +272,129 @@ class AutomationCycleTests(TestCase):
             os.environ,
             {
                 'GEMINI_API_KEY': 'test-api-key',
-                'GEMINI_MODEL': 'gemini-test-override',
+                'GEMINI_MODEL': 'gemini-test-flash-lite',
             },
             clear=True,
         ):
             call_gemini('A vacancy')
 
         self.assertIn(
-            '/models/gemini-test-override:generateContent',
+            '/models/gemini-test-flash-lite:generateContent',
             post.call_args.args[0],
         )
+
+    def test_gemini_flash_model_override_is_not_used(self):
+        with patch.dict(
+            os.environ,
+            {
+                'GEMINI_API_KEY': 'test-api-key',
+                'GEMINI_MODEL': 'gemini-3.8-flash',
+            },
+            clear=True,
+        ), patch('jobs.services.ai_service.requests.post') as post:
+            with self.assertRaisesRegex(RuntimeError, 'Flash-Lite'):
+                call_gemini('A vacancy')
+
+        post.assert_not_called()
+
+    def test_provider_order_and_gemini_flash_lite_default(self):
+        self.assertEqual(
+            [name for name, _ in PROVIDERS],
+            ['gemini', 'groq', 'openrouter'],
+        )
+        gemini = Mock(return_value={'is_job': True})
+        groq = Mock(return_value={'is_job': True})
+        openrouter = Mock(return_value={'is_job': True})
+        providers = [
+            ('gemini', gemini),
+            ('groq', groq),
+            ('openrouter', openrouter),
+        ]
+        with patch('jobs.services.ai_service.PROVIDERS', providers):
+            result = extract_job('A vacancy')
+
+        self.assertEqual(
+            [name for name, _ in providers],
+            ['gemini', 'groq', 'openrouter'],
+        )
+        self.assertEqual(DEFAULT_GEMINI_MODEL, 'gemini-2.5-flash-lite')
+        self.assertEqual(result['_provider'], 'gemini')
+        gemini.assert_called_once_with('A vacancy')
+        groq.assert_not_called()
+        openrouter.assert_not_called()
+
+    def test_gemini_429_falls_back_to_groq_without_retry(self):
+        gemini = Mock(side_effect=requests.HTTPError(
+            '429 Too Many Requests',
+            response=Mock(status_code=429),
+        ))
+        groq = Mock(return_value={'is_job': True})
+        openrouter = Mock()
+        events = []
+        with patch(
+            'jobs.services.ai_service.PROVIDERS',
+            [
+                ('gemini', gemini),
+                ('groq', groq),
+                ('openrouter', openrouter),
+            ],
+        ):
+            result = extract_job('A vacancy', log=lambda **event: events.append(event))
+
+        self.assertEqual(result['_provider'], 'groq')
+        gemini.assert_called_once_with('A vacancy')
+        groq.assert_called_once_with('A vacancy')
+        openrouter.assert_not_called()
+        self.assertTrue(any('HTTP 429' in event['message'] for event in events))
+        self.assertTrue(any(
+            event['provider'] == 'groq'
+            and 'Fallback selected' in event['message']
+            for event in events
+        ))
+
+    def test_groq_429_falls_back_to_openrouter_without_retry(self):
+        gemini = Mock(side_effect=RuntimeError('Gemini unavailable'))
+        groq = Mock(side_effect=requests.HTTPError(
+            '429 Too Many Requests',
+            response=Mock(status_code=429),
+        ))
+        openrouter = Mock(return_value={'is_job': True})
+        with patch(
+            'jobs.services.ai_service.PROVIDERS',
+            [
+                ('gemini', gemini),
+                ('groq', groq),
+                ('openrouter', openrouter),
+            ],
+        ):
+            result = extract_job('A vacancy')
+
+        self.assertEqual(result['_provider'], 'openrouter')
+        gemini.assert_called_once_with('A vacancy')
+        groq.assert_called_once_with('A vacancy')
+        openrouter.assert_called_once_with('A vacancy')
+
+    def test_provider_logs_never_expose_api_keys(self):
+        secret = 'provider-secret-key'
+        gemini = Mock(side_effect=RuntimeError(f'GEMINI_API_KEY={secret}'))
+        events = []
+        with patch.dict(os.environ, {'GEMINI_API_KEY': secret}), patch(
+            'jobs.services.ai_service.PROVIDERS',
+            [
+                ('gemini', gemini),
+                ('groq', Mock(side_effect=RuntimeError('Groq unavailable'))),
+                ('openrouter', Mock(side_effect=RuntimeError('OpenRouter unavailable'))),
+            ],
+        ):
+            with self.assertRaises(AIProvidersUnavailable) as raised:
+                extract_job('A vacancy', log=lambda **event: events.append(event))
+
+        self.assertNotIn(secret, str(raised.exception))
+        self.assertNotIn(secret, repr(events))
+        self.assertTrue(any(
+            event['provider'] == 'all' and event['status'] == 'failed'
+            for event in events
+        ))
 
     def test_ai_provider_fallback_remains_intact(self):
         gemini = Mock(side_effect=RuntimeError('Gemini unavailable'))
@@ -450,6 +589,52 @@ class AutomationCycleTests(TestCase):
         self.assertIn('[redacted]', raw.last_error)
         self.assertNotIn('provider-secret', raw.last_error)
         self.assertTrue(raw.logs.filter(stage='system', status='failed').exists())
+
+    def test_provider_exhaustion_keeps_raw_post_retryable(self):
+        raw = RawJobPost.objects.create(
+            external_id='provider-exhaustion',
+            content='A collected vacancy',
+            content_hash='d' * 64,
+        )
+        providers = [
+            (name, Mock(side_effect=requests.HTTPError(
+                '429 Too Many Requests',
+                response=Mock(status_code=429),
+            )))
+            for name in ('gemini', 'groq', 'openrouter')
+        ]
+
+        with patch('jobs.services.ai_service.PROVIDERS', providers):
+            result = process_raw(raw)
+
+        raw.refresh_from_db()
+        self.assertIsNone(result)
+        self.assertTrue(RawJobPost.objects.filter(pk=raw.pk).exists())
+        self.assertEqual(raw.status, 'new')
+        self.assertIn('HTTP 429', raw.last_error)
+        self.assertEqual(raw.attempts, 1)
+        for _, provider in providers:
+            provider.assert_called_once_with('A collected vacancy')
+        self.assertTrue(raw.logs.filter(stage='system', status='failed').exists())
+
+    @patch('jobs.services.processor.extract_job')
+    def test_ai_provider_failure_can_be_retried_in_a_later_cycle(self, extract_job):
+        extract_job.side_effect = AIProvidersUnavailable('All AI providers failed: 429')
+        raw = RawJobPost.objects.create(
+            external_id='provider-retry',
+            content='A collected vacancy',
+            content_hash='f' * 64,
+        )
+
+        process_raw(raw)
+        raw.refresh_from_db()
+        self.assertEqual(raw.status, 'new')
+
+        process_raw(raw)
+        raw.refresh_from_db()
+        self.assertEqual(raw.status, 'new')
+        self.assertEqual(raw.attempts, 2)
+        self.assertEqual(extract_job.call_count, 2)
 
     @patch('jobs.services.processor.extract_job')
     def test_expired_job_is_rejected_before_creation(self, extract_job):

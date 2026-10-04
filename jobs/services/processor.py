@@ -2,7 +2,7 @@ import re
 from html import escape
 from datetime import datetime
 from django.utils import timezone
-from .ai_service import extract_job
+from .ai_service import AIProvidersUnavailable, extract_job
 from .dedupe_service import find_duplicate, fingerprint
 from .utils import clean_text, normalize, safe_error_message, safe_http_url
 from .scheduler_service import automation_timezone
@@ -278,6 +278,11 @@ def process_raw(raw):
         raw.save(update_fields=['status', 'job', 'processed_at', 'last_error'])
         log_event(raw, 'publish', 'success', 'Job created.', job=job)
         return job
+    except AIProvidersUnavailable as exc:
+        raw.status, raw.last_error = 'new', safe_error_message(exc)
+        raw.save(update_fields=['status', 'last_error'])
+        log_event(raw, 'system', 'failed', raw.last_error, retry_count=raw.attempts)
+        return None
     except Exception as exc:
         raw.status, raw.last_error = 'failed', safe_error_message(exc)
         raw.save(update_fields=['status', 'last_error'])

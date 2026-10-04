@@ -1,12 +1,15 @@
 import json
 import os
-import time
 import requests
 
 from .utils import clean_text, safe_error_message
 
 
-DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash'
+DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite'
+
+
+class AIProvidersUnavailable(RuntimeError):
+    pass
 
 NULLABLE_NUMBER = {
     'anyOf': [
@@ -228,61 +231,12 @@ def call_gemini(text):
         DEFAULT_GEMINI_MODEL
     ).strip() or DEFAULT_GEMINI_MODEL
 
-    errors = []
-    for attempt in range(3):
-        try:
-            return _gemini_request(primary_model, text)
+    if not primary_model.lower().endswith('flash-lite'):
+        raise RuntimeError(
+            'GEMINI_MODEL must identify a Gemini Flash-Lite model'
+        )
 
-        except requests.HTTPError as exc:
-            status = (
-                exc.response.status_code
-                if exc.response is not None
-                else None
-            )
-
-            errors.append(
-                f'{primary_model} attempt {attempt + 1}: '
-                f'HTTP {status}: {exc}'
-            )
-
-            if status in (429, 500, 502, 503, 504):
-                if attempt < 2:
-                    time.sleep(2 ** attempt)
-                    continue
-
-            break
-
-        except requests.RequestException as exc:
-            errors.append(
-                f'{primary_model} attempt {attempt + 1}: {exc}'
-            )
-
-            if attempt < 2:
-                time.sleep(2 ** attempt)
-                continue
-
-            break
-
-        except (ValueError, json.JSONDecodeError) as exc:
-            errors.append(
-                f'{primary_model} attempt {attempt + 1}: {exc}'
-            )
-
-            if attempt < 2:
-                time.sleep(2 ** attempt)
-                continue
-
-            break
-
-        except Exception as exc:
-            errors.append(
-                f'{primary_model} attempt {attempt + 1}: {exc}'
-            )
-            break
-
-    raise RuntimeError(
-        'Gemini model failed: ' + ' | '.join(errors)
-    )
+    return _gemini_request(primary_model, text)
 
 
 def call_openai_compatible(
@@ -383,10 +337,37 @@ PROVIDERS = [
 ]
 
 
+def _is_rate_limit_error(exc):
+    response = getattr(exc, 'response', None)
+    if response is not None and response.status_code == 429:
+        return True
+
+    message = str(exc).lower()
+    return any(
+        marker in message
+        for marker in (
+            'http 429',
+            '429 too many',
+            'rate limit',
+            'rate_limit',
+            'quota',
+            'too many requests',
+            'insufficient_quota',
+        )
+    )
+
+
 def extract_job(text, log=None):
     errors = []
 
-    for name, fn in PROVIDERS:
+    for index, (name, fn) in enumerate(PROVIDERS):
+        if index == 0 and log:
+            log(
+                provider=name,
+                status='started',
+                message='Primary provider attempt',
+            )
+
         try:
             result = fn(text)
 
@@ -407,18 +388,43 @@ def extract_job(text, log=None):
             return result
 
         except Exception as exc:
-            errors.append(
-                f'{name}: {exc}'
-            )
+            error = safe_error_message(exc)
+            if _is_rate_limit_error(exc):
+                status = getattr(
+                    getattr(exc, 'response', None),
+                    'status_code',
+                    None,
+                )
+                marker = (
+                    'HTTP 429 rate-limit/quota failure'
+                    if status == 429
+                    else 'Rate-limit/quota failure'
+                )
+                error = f'{marker}: {error}'
+
+            errors.append(f'{name}: {error}')
 
             if log:
                 log(
                     provider=name,
                     status='failed',
-                    message=str(exc),
+                    message=error,
                 )
 
-    raise RuntimeError(
-        'All AI providers failed: '
-        + ' | '.join(errors)
+            if index + 1 < len(PROVIDERS) and log:
+                log(
+                    provider=PROVIDERS[index + 1][0],
+                    status='started',
+                    message=f'Fallback selected after {name} failure',
+                )
+
+    failure = safe_error_message(
+        'All AI providers failed: ' + ' | '.join(errors)
     )
+    if log:
+        log(
+            provider='all',
+            status='failed',
+            message=failure,
+        )
+    raise AIProvidersUnavailable(failure)
