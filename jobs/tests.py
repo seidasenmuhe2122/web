@@ -1,10 +1,12 @@
 from datetime import datetime, time, timedelta, timezone as datetime_timezone
-from io import StringIO
+from io import BytesIO, StringIO
 import os
 import tempfile
 from unittest.mock import Mock, patch
 
 import requests
+from PIL import Image
+from django import forms
 from django.core import mail
 from django.core.cache import cache
 from django.core.management import call_command
@@ -20,8 +22,8 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .admin import AdvertisementTextWidget
-from .services.ai_service import SCHEMA, _gemini_request, call_gemini, extract_job
+from .admin import AdvertisementTextWidget, JobAdminForm
+from .services.ai_service import PROMPT, SCHEMA, _gemini_request, call_gemini, extract_job
 from .models import (
     Advertisement,
     AutomationControl,
@@ -42,7 +44,7 @@ from .services.collectors import collect_website, save_raw
 from .services.processor import process_raw
 from .services.telegram_service import send_job, send_job_to_destination
 from .services.scheduler_service import automation_timezone, get_active_schedule
-from .templatetags.security_tags import sanitize_ad_code, sanitize_html
+from .templatetags.security_tags import job_description, sanitize_ad_code, sanitize_html
 from jopportal.middleware import RateLimitMiddleware
 
 
@@ -198,13 +200,16 @@ class AutomationCycleTests(TestCase):
                 'category', 'salary', 'deadline', 'description',
                 'requirements', 'responsibilities', 'education', 'experience',
                 'how_to_apply', 'application_url', 'contact_email',
-                'contact_phone', 'source_name', 'source_url',
+                'contact_phone', 'contact_telegram', 'source_name', 'source_url',
             },
         )
         self.assertEqual(set(request_schema['properties']), set(request_schema['required']))
         self.assertEqual(generation_config['responseMimeType'], 'application/json')
         self.assertNotIn('responseSchema', generation_config)
         self.assertNotIn('temperature', generation_config)
+        self.assertEqual(SCHEMA['properties']['experience'], {'type': 'string'})
+        self.assertIn('free-form text', PROMPT)
+        self.assertIn('Do not map experience to', PROMPT)
 
     @patch('jobs.services.ai_service.requests.post')
     def test_gemini_default_model_is_used_by_active_provider(self, post):
@@ -309,6 +314,123 @@ class AutomationCycleTests(TestCase):
         self.assertEqual(duplicate.pk, job.pk)
         self.assertEqual(second.status, 'duplicate')
         self.assertEqual(second.job_id, job.pk)
+
+    @patch('jobs.services.processor.extract_job')
+    def test_processor_preserves_free_text_experience_without_defaulting(self, extract_job):
+        cases = (
+            ('At least 3 years of experience', 'At least 3 years of experience'),
+            ('2+ years of experience in accounting', '2+ years of experience in accounting'),
+            ('No prior experience required', 'No prior experience required'),
+            ('', ''),
+            ('Fresh graduates are encouraged to apply', 'Fresh graduates are encouraged to apply'),
+        )
+
+        for index, (experience, expected) in enumerate(cases):
+            with self.subTest(experience=experience):
+                data = {
+                    'is_job': True,
+                    'title': f'Experience test {index}',
+                    'company': 'Experience Test Company',
+                    'location': 'Addis Ababa',
+                    'description': 'A test vacancy description.',
+                    'category': 'Other',
+                    'job_type': 'Full-time',
+                    'experience': experience,
+                    'requirements': [],
+                    'responsibilities': [],
+                }
+                extract_job.return_value = data
+                raw = RawJobPost.objects.create(
+                    external_id=f'experience-test-{index}',
+                    content=f'Vacancy content for experience test {index}.',
+                    content_hash=f'{index + 1:064d}',
+                )
+
+                job = process_raw(raw)
+
+                self.assertIsNotNone(job)
+                self.assertEqual(job.experience_level, expected)
+                if expected:
+                    self.assertIn(expected, job.description)
+                else:
+                    self.assertNotIn('<h5>Experience</h5>', job.description)
+
+    def test_job_experience_is_free_text_in_model_and_admin(self):
+        experience = 'At least 4 years of relevant experience in procurement'
+        job = Job.objects.create(
+            title='Procurement Specialist',
+            company_name='Example Company',
+            location='Addis Ababa',
+            experience_level=experience,
+            description='A procurement vacancy.',
+        )
+
+        field = Job._meta.get_field('experience_level')
+        admin_field = JobAdminForm().fields['experience_level']
+        response = self.client.get(reverse('job_detail', args=[job.pk]))
+
+        self.assertEqual(field.max_length, 200)
+        self.assertIsNone(field.choices)
+        self.assertEqual(field.default, '')
+        self.assertEqual(field.blank, True)
+        self.assertIsInstance(admin_field.widget, forms.TextInput)
+        self.assertContains(response, experience)
+
+    @patch('jobs.services.processor.extract_job')
+    def test_processor_preserves_structured_details_and_application_contacts(self, extract_job):
+        extract_job.return_value = {
+            'is_job': True,
+            'title': 'Program Coordinator',
+            'company': 'Example Organization',
+            'location': 'Addis Ababa',
+            'description': '<script>alert(1)</script> Coordinate field programs.',
+            'category': 'NGO',
+            'job_type': ['Full-time'],
+            'experience': '2 years',
+            'requirements': 'Relevant degree',
+            'responsibilities': ['Prepare reports', 'Coordinate staff'],
+            'education': 'Bachelor degree',
+            'how_to_apply': '',
+            'application_url': '',
+            'contact_email': 'hr@example.com',
+            'contact_phone': '+251 911 123 456',
+            'contact_telegram': '@hrteam',
+            'source_url': 'https://t.me/example_channel/123',
+        }
+        raw = RawJobPost.objects.create(
+            external_id='structured-description',
+            content=(
+                'Interested candidates should send a CV to hr@example.com '
+                'or message @hrteam. Applications close on Friday.'
+            ),
+            content_hash='d' * 64,
+        )
+
+        job = process_raw(raw)
+
+        self.assertIsNotNone(job)
+        self.assertIn('<h5>Job Description</h5>', job.description)
+        self.assertIn('<ul><li>Prepare reports</li><li>Coordinate staff</li></ul>', job.description)
+        self.assertIn('<ul><li>Relevant degree</li></ul>', job.description)
+        self.assertIn('<h5>Education</h5>', job.description)
+        self.assertIn('<h5>Experience</h5>', job.description)
+        self.assertIn('<h5>How to Apply</h5>', job.description)
+        self.assertIn('<strong>Email:</strong> hr@example.com', job.description)
+        self.assertIn('<strong>Phone:</strong> +251 911 123 456', job.description)
+        self.assertIn('<strong>Telegram:</strong> @hrteam', job.description)
+        self.assertIn('Applications close on Friday.', job.description)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', job.description)
+        rendered_description = job_description(job.description)
+        self.assertIn('&lt;script&gt;alert(1)&lt;/script&gt;', rendered_description)
+        self.assertNotIn('<script>', rendered_description)
+        self.assertEqual(job.apply_link, '')
+        self.assertEqual(job.source_url, 'https://t.me/example_channel/123')
+
+        response = self.client.get(reverse('job_detail', args=[job.pk]))
+        self.assertContains(response, '<ul>', html=False)
+        self.assertContains(response, '<strong>Email:</strong> hr@example.com', html=False)
+        self.assertContains(response, 'Interested candidates should send a CV', html=False)
+        self.assertNotContains(response, 'Apply Now')
 
     @patch('jobs.services.processor.extract_job')
     def test_ai_failure_is_recorded_on_raw_post_and_processing_log(self, extract_job):
@@ -682,6 +804,20 @@ class SecurityTests(TestCase):
         self.assertIn('https://example.com/image.jpg', cleaned)
         self.assertIn('max-width: 100%', cleaned)
 
+    def test_legacy_job_description_formats_sections_and_repairs_mojibake(self):
+        rendered = job_description(
+            'Job Description\nManage field operations.\n\n'
+            'Responsibilities:\nâ€¢ Prepare reports\nâ€¢ Coordinate staff\n\n'
+            'Requirements:\n- Relevant degree'
+        )
+
+        self.assertIn('<h5>Job Description</h5>', rendered)
+        self.assertIn('<h5>Responsibilities</h5>', rendered)
+        self.assertIn('<ul><li>Prepare reports</li><li>Coordinate staff</li></ul>', rendered)
+        self.assertIn('<h5>Requirements</h5>', rendered)
+        self.assertIn('<ul><li>Relevant degree</li></ul>', rendered)
+        self.assertNotIn('â€¢', rendered)
+
     def test_ad_code_sanitizer_removes_untrusted_script_markup(self):
         cleaned = sanitize_ad_code(
             '<script>alert(1)</script>'
@@ -758,8 +894,51 @@ class SecurityTests(TestCase):
         self.assertContains(category_response, '<p>Safe</p>', html=False)
         self.assertNotContains(category_response, '<script>alert("category")</script>', html=False)
 
-    def test_security_settings_restrict_rich_text_uploads_to_images(self):
-        self.assertFalse(settings.CKEDITOR_ALLOW_NONIMAGE_FILES)
+    def test_security_settings_restrict_rich_text_uploads_to_staff_and_images(self):
+        self.assertEqual(settings.CKEDITOR_5_FILE_UPLOAD_PERMISSION, 'staff')
+        self.assertEqual(
+            settings.CKEDITOR_5_UPLOAD_FILE_TYPES,
+            ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'],
+        )
+        self.assertEqual(settings.CKEDITOR_5_MAX_FILE_SIZE, 5 * 1024 * 1024)
+
+    def test_ckeditor5_upload_requires_staff(self):
+        response = self.client.post('/ckeditor5/image_upload/')
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_staff_can_upload_valid_image_with_ckeditor5(self):
+        editor = get_user_model().objects.create_user(
+            username='ckeditor-editor',
+            password='test-password-123',
+            is_staff=True,
+        )
+        self.client.force_login(editor)
+        image_data = BytesIO()
+        Image.new('RGB', (1, 1), color='white').save(image_data, format='PNG')
+        upload = SimpleUploadedFile(
+            'editor-image.png',
+            image_data.getvalue(),
+            content_type='image/png',
+        )
+
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                response = self.client.post(
+                    '/ckeditor5/image_upload/',
+                    {'upload': upload},
+                )
+
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json()['url'], '/media/editor-image.png')
+                saved_image = os.path.join(media_root, 'editor-image.png')
+                self.assertTrue(os.path.exists(saved_image))
+                Image.open(saved_image).verify()
+
+    def test_ckeditor4_upload_route_is_removed(self):
+        response = self.client.post('/ckeditor/upload/')
+
+        self.assertEqual(response.status_code, 404)
 
     def test_job_application_link_uses_safe_new_tab_attributes(self):
         job = Job.objects.create(
@@ -773,6 +952,21 @@ class SecurityTests(TestCase):
         response = self.client.get(reverse('job_detail', args=[job.pk]))
 
         self.assertContains(response, 'rel="noopener noreferrer"')
+
+    def test_job_detail_does_not_offer_source_url_as_application_link(self):
+        job = Job.objects.create(
+            title='Source is not application',
+            company_name='Security Company',
+            location='Kombolcha',
+            description='Apply by email to jobs@example.com.',
+            apply_link='javascript:alert(1)',
+            source_url='https://t.me/example_channel/123',
+        )
+
+        response = self.client.get(reverse('job_detail', args=[job.pk]))
+
+        self.assertNotContains(response, 'Apply Now')
+        self.assertContains(response, 'jobs@example.com')
 
     def test_job_description_editor_supports_image_insertion(self):
         rendered = AdvertisementTextWidget().render('description', '', {'id': 'id_description'})
@@ -865,16 +1059,37 @@ class LegalPageTests(TestCase):
         self.assertContains(list_response, post.cover_image.url)
         self.assertContains(detail_response, post.cover_image.url)
 
-    def test_blog_editor_image_features_are_configured(self):
-        self.assertIn('image2', settings.CKEDITOR_CONFIGS['default']['extraPlugins'])
-        self.assertIn('uploadimage', settings.CKEDITOR_CONFIGS['default']['extraPlugins'])
-        self.assertFalse(settings.CKEDITOR_CONFIGS['default']['image2_disableResizer'])
+    def test_blog_editor_formatting_and_image_features_are_configured(self):
+        toolbar = settings.CKEDITOR_5_CONFIGS['default']['toolbar']['items']
+
+        for feature in (
+            'heading', 'bold', 'italic', 'link', 'bulletedList',
+            'numberedList', 'blockQuote', 'undo', 'redo', 'imageUpload',
+        ):
+            self.assertIn(feature, toolbar)
 
     def test_blog_admin_uses_upload_enabled_editor(self):
         from .admin import BlogPostAdmin
 
         form = BlogPostAdmin.form()
-        self.assertEqual(form.fields['content'].widget.__class__.__name__, 'CKEditorUploadingWidget')
+        self.assertEqual(form.fields['content'].widget.__class__.__name__, 'CKEditor5Widget')
+
+    def test_rich_text_models_preserve_html_content(self):
+        from django.contrib import admin
+        from .models import BlogPost, JobCategory
+
+        blog_html = '<h2>Article heading</h2><p><strong>Existing</strong> content.</p>'
+        category_html = '<p>Existing category <a href="https://example.com">link</a>.</p>'
+        blog = BlogPost.objects.create(title='Existing content', content=blog_html)
+        category = JobCategory.objects.create(name='Existing HTML', description=category_html)
+        category_form = admin.site._registry[JobCategory].get_form(None)()
+
+        blog.refresh_from_db()
+        category.refresh_from_db()
+
+        self.assertEqual(blog.content, blog_html)
+        self.assertEqual(category.description, category_html)
+        self.assertEqual(category_form.fields['description'].widget.__class__.__name__, 'CKEditor5Widget')
 
     def test_job_display_defaults_to_work_and_preserves_previous_mode(self):
         job = Job.objects.create(

@@ -57,8 +57,8 @@
             <label class="form-label text-white-50 small">{% translate "Experience" %}</label>
             <select name="experience" class="form-select glass-select">
                 <option value="">{% translate "All" %}</option>
-                {% for value, label in experience_levels %}
-                    <option value="{{ value }}" {% if request.GET.experience == value %}selected{% endif %}>{% translate label %}</option>
+                {% for value in experience_levels %}
+                    <option value="{{ value }}" {% if request.GET.experience == value %}selected{% endif %}>{{ value }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -140,7 +140,7 @@
                         </div>
                         <div class="row g-3 mt-3 pt-3 border-top border-light border-opacity-10 text-white-50 small">
                             <div class="col-md-6"><i class="fa-solid fa-location-dot me-2 text-danger"></i><strong>{% translate "Location" %}:</strong> {{ job.location }}</div>
-                            <div class="col-md-6"><i class="fa-solid fa-layer-group me-2 text-info"></i><strong>{% translate "Experience" %}:</strong> {{ job.get_experience_level_display }}</div>
+                            <div class="col-md-6"><i class="fa-solid fa-layer-group me-2 text-info"></i><strong>{% translate "Experience" %}:</strong> {{ job.experience_level }}</div>
                             <div class="col-md-6"><i class="fa-solid fa-money-bill-wave me-2 text-success"></i><strong>{% translate "Salary" %}:</strong> {% if job.salary %}{{ job.salary }}{% else %}{% translate "Negotiable" %}{% endif %}</div>
                             <div class="col-md-6"><i class="fa-solid fa-briefcase me-2 text-primary"></i><strong>{% translate "Job Type" %}:</strong> {{ job.get_job_type_display }}</div>
                             <div class="col-md-6"><i class="fa-solid fa-users me-2 text-warning"></i><strong>{% translate "Vacancies" %}:</strong> {{ job.vacancies }}</div>
@@ -182,7 +182,7 @@
                                     <div class="d-flex flex-wrap gap-3 text-white-50 small">
                                         <span><i class="fa-solid fa-location-dot me-1 text-danger"></i> {{ job.location }}</span>
                                         <span><i class="fa-solid fa-briefcase me-1 text-primary"></i> {{ job.get_job_type_display }}</span>
-                                        <span><i class="fa-solid fa-clock me-1 text-info"></i> {{ job.get_experience_level_display }}</span>
+                                        <span><i class="fa-solid fa-clock me-1 text-info"></i> {{ job.experience_level }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -233,7 +233,7 @@
                         <div class="row g-3 my-2 bg-light p-3 rounded">
                             <div class="col-md-6"><i class="fa-solid fa-location-dot text-danger me-2"></i><strong>{% translate "Location" %}:</strong> {{ job.location }}</div>
                             <div class="col-md-6"><i class="fa-solid fa-briefcase text-primary me-2"></i><strong>{% translate "Job Type" %}:</strong> {{ job.get_job_type_display }}</div>
-                            <div class="col-md-6"><i class="fa-solid fa-layer-group text-info me-2"></i><strong>{% translate "Experience" %}:</strong> {{ job.get_experience_level_display }}</div>
+                            <div class="col-md-6"><i class="fa-solid fa-layer-group text-info me-2"></i><strong>{% translate "Experience" %}:</strong> {{ job.experience_level }}</div>
                             <div class="col-md-6"><i class="fa-solid fa-users text-warning me-2"></i><strong>{% translate "Vacancies" %}:</strong> {{ job.vacancies }}</div>
                             <div class="col-md-6"><i class="fa-solid fa-money-bill-wave text-success me-2"></i><strong>{% translate "Salary" %}:</strong> {% if job.salary %}{{ job.salary }}{% else %}{% translate "Negotiable" %}{% endif %}</div>
                             <div class="col-md-6"><i class="fa-solid fa-calendar-xmark text-secondary me-2"></i><strong>{% translate "Application deadline" %}:</strong> {{ job.deadline|date:"M d, Y" }}</div>

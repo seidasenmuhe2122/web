@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator, RegexVa
 from django.utils.text import slugify
 from django.utils import timezone, translation
 from django.utils.translation import gettext_lazy as _
-from ckeditor.fields import RichTextField
+from django_ckeditor_5.fields import CKEditor5Field
 
 class Job(models.Model):
     DISPLAY_MODE_CHOICES = [
@@ -23,13 +23,6 @@ class Job(models.Model):
         ('Internship', _('Internship')),
     ]
 
-    EXP_LEVEL_CHOICES = [
-        ('Fresh Graduate', _('Fresh Graduate')),
-        ('1-3 Years', _('1-3 Years')),
-        ('3-5 Years', _('3-5 Years')),
-        ('5+ Years', _('5+ Years')),
-    ]
-
     title = models.CharField(max_length=200)
     company_name = models.CharField(max_length=200)
     company_logo = models.ImageField(upload_to='company_logos/', blank=True, null=True)
@@ -41,7 +34,7 @@ class Job(models.Model):
         default='site',
         help_text='Choose the display for this job, or inherit the Website Settings default.',
     )
-    experience_level = models.CharField(max_length=30, choices=EXP_LEVEL_CHOICES, default='Fresh Graduate')
+    experience_level = models.CharField(max_length=200, blank=True, default='')
     category = models.ForeignKey(
         'JobCategory',
         on_delete=models.SET_NULL,
@@ -146,7 +139,7 @@ class BlogPost(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, blank=True)
     excerpt = models.TextField(blank=True, help_text='Short summary shown on blog cards.')
-    content = RichTextField(help_text='Full article content with formatting tools.')
+    content = CKEditor5Field(help_text='Full article content with formatting tools.')
     cover_image = models.ImageField(upload_to='blog/', blank=True, null=True)
     author = models.CharField(max_length=120, blank=True, default='Admin')
     is_published = models.BooleanField(default=True)
@@ -170,7 +163,7 @@ class BlogPost(models.Model):
 class JobCategory(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True)
-    description = RichTextField(blank=True, help_text='Short category description with formatting.')
+    description = CKEditor5Field(blank=True, help_text='Short category description with formatting.')
     icon = models.CharField(max_length=50, blank=True, default='fa-briefcase', help_text='Font Awesome icon class, e.g. fa-briefcase.')
     accent_color = models.CharField(max_length=7, default='#63d9ff', blank=True, validators=[RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Enter a six-digit hexadecimal color.')])
     is_featured = models.BooleanField(default=False)
@@ -862,4 +855,3 @@ class AutomationRun(models.Model):
 
     class Meta:
         ordering = ['-started_at']
-

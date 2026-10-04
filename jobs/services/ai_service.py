@@ -59,6 +59,7 @@ SCHEMA = {
         'application_url': {'type': 'string'},
         'contact_email': {'type': 'string'},
         'contact_phone': {'type': 'string'},
+        'contact_telegram': {'type': 'string'},
         'source_name': {'type': 'string'},
         'source_url': {'type': 'string'},
     },
@@ -92,6 +93,7 @@ SCHEMA = {
         'application_url',
         'contact_email',
         'contact_phone',
+        'contact_telegram',
         'source_name',
         'source_url',
     ],
@@ -108,7 +110,7 @@ APPLICATION RULES:
 1. If the source contains a real application URL, extract the exact application URL into application_url.
 2. Do NOT use a company homepage, vacancy information page, source page, Telegram post URL, or general website URL as application_url unless the source clearly states that applicants should apply through that exact URL.
 3. If there is no application URL but the source provides an application method such as email, phone number, Telegram contact, office address, physical submission location, or other contact instruction, preserve it exactly in how_to_apply.
-4. Never lose application contact information. Extract contact_email, contact_phone and Telegram contact details when explicitly provided.
+4. Never lose application contact information. Extract contact_email, contact_phone and contact_telegram when explicitly provided.
 5. If applicants are instructed to contact someone, send a CV by email, call a phone number, message Telegram, or submit documents at an address, treat that as the application method.
 6. Do not invent an application link when none exists.
 
@@ -126,6 +128,15 @@ NGO, Private Company, Government, International Organization, UN / Development O
 Classify education, employment type, experience, work mode, region and country only from stated facts.
 
 For missing or unclear values, return an empty string. Never infer.
+
+EXPERIENCE RULES:
+Return the experience requirement as free-form text in the experience field.
+Preserve the meaning and specific wording from the source, including years, months,
+minimums, preferred experience, and statements that no experience is required.
+Do not map experience to Fresh Graduate, Entry Level, Mid Level, Senior Level, or
+any other predefined category. Use Fresh Graduate only when the source explicitly
+mentions fresh graduates, and preserve the complete stated requirement.
+Do not put education or job/employment type into the experience field.
 
 Extract languages explicitly required and useful job keywords when present.
 

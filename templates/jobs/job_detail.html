@@ -31,7 +31,7 @@
                 <div class="row g-3 my-2 bg-light p-3 rounded">
                     <div class="col-md-6"><i class="fa-solid fa-location-dot text-danger me-2"></i> <strong>{% translate "Location" %}:</strong> {{ job.location }}</div>
                     <div class="col-md-6"><i class="fa-solid fa-briefcase text-primary me-2"></i> <strong>{% translate "Job Type" %}:</strong> {{ job.get_job_type_display }}</div>
-                    <div class="col-md-6"><i class="fa-solid fa-layer-group text-info me-2"></i> <strong>{% translate "Experience" %}:</strong> {{ job.get_experience_level_display }}</div>
+                    <div class="col-md-6"><i class="fa-solid fa-layer-group text-info me-2"></i> <strong>{% translate "Experience" %}:</strong> {{ job.experience_level }}</div>
                     <div class="col-md-6"><i class="fa-solid fa-users text-warning me-2"></i> <strong>{% translate "Vacancies" %}:</strong> {{ job.vacancies }}</div>
                     {% if job.salary %}
                         <div class="col-md-6"><i class="fa-solid fa-money-bill-wave text-success me-2"></i> <strong>{% translate "Salary" %}:</strong> {{ job.salary }}</div>
@@ -44,17 +44,17 @@
                 {% endif %}
 
                 <h4 class="fw-bold text-secondary mt-4 mb-3">{% translate "Job Description" %}</h4>
-                <div class="job-description-content border p-3 rounded bg-white">
-                    {{ job.translated_description|sanitize_html }}
+                <div class="job-description-content border p-3 p-md-4 rounded bg-white">
+                    {{ job.translated_description|job_description }}
                 </div>
 
-                <div class="mt-4 text-center">
-                    {% if job.apply_link %}
-                        <a href="{{ job.apply_link }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
+                {% if apply_url %}
+                    <div class="mt-4 text-center">
+                        <a href="{{ apply_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">
                             <i class="fa-solid fa-paper-plane me-2"></i>{% translate "Apply Now" %}
                         </a>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
 
                 {% if after_apply_ad and not site_settings or after_apply_ad and site_settings.show_advertisements %}
                     {% include 'jobs/_advertisement.html' with ad=after_apply_ad %}

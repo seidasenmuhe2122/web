@@ -95,7 +95,7 @@ class RateLimitMiddleware:
             return 'admin_login'
         if path in {'/contact-us', '/contact-us/message'} and method == 'POST':
             return 'contact'
-        if path.startswith('/ckeditor/upload') and method == 'POST':
+        if path.startswith('/ckeditor5/image_upload') and method == 'POST':
             return 'upload'
         if '/api/' in f'{path}/' or path.startswith('/api'):
             return 'api'

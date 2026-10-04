@@ -94,8 +94,7 @@ LOCALE_PATHS = [
 
 INSTALLED_APPS = [
     'jazzmin',
-    'ckeditor',
-    'ckeditor_uploader',
+    'django_ckeditor_5',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -106,21 +105,37 @@ INSTALLED_APPS = [
     'jobs',
 ]
 
-CKEDITOR_CONFIGS = {
+CKEDITOR_5_CONFIGS = {
     'default': {
-        'toolbar': 'full',
-        'height': 220,
-        'width': '100%',
-        'extraPlugins': 'image2,uploadimage',
-        'removePlugins': 'stylesheetparser,image',
-        'filebrowserUploadUrl': '/ckeditor/upload/',
-        'filebrowserBrowseUrl': '/ckeditor/browse/',
-        'image2_alignClasses': ['image-align-left', 'image-align-center', 'image-align-right'],
-        'image2_disableResizer': False,
-    }
+        'toolbar': {
+            'items': [
+                'heading',
+                '|',
+                'bold',
+                'italic',
+                'link',
+                'bulletedList',
+                'numberedList',
+                'blockQuote',
+                '|',
+                'undo',
+                'redo',
+                'imageUpload',
+            ],
+        },
+        'image': {
+            'toolbar': [
+                'imageTextAlternative',
+                'imageStyle:alignLeft',
+                'imageStyle:alignCenter',
+                'imageStyle:alignRight',
+            ],
+        },
+    },
 }
-CKEDITOR_UPLOAD_PATH = 'uploads/'
-CKEDITOR_ALLOW_NONIMAGE_FILES = False
+CKEDITOR_5_FILE_UPLOAD_PERMISSION = 'staff'
+CKEDITOR_5_UPLOAD_FILE_TYPES = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp']
+CKEDITOR_5_MAX_FILE_SIZE = 5 * 1024 * 1024
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

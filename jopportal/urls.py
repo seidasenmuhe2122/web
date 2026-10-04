@@ -83,7 +83,7 @@ def set_language_with_prefix(request):
 
 
 urlpatterns = [
-    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('ckeditor5/', include('django_ckeditor_5.urls')),
     path('i18n/setlang/', set_language_with_prefix, name='set_language'),
 ]
 

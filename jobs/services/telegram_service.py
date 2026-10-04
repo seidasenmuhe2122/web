@@ -245,11 +245,7 @@ def send_job_to_destination(job, destination):
             else job.job_type
         )
 
-        experience = (
-            job.get_experience_level_display()
-            if hasattr(job, 'get_experience_level_display')
-            else job.experience_level
-        )
+        experience = job.experience_level
 
         salary = (
             job.salary.strip()
@@ -361,5 +357,4 @@ def send_job(job, destinations=None):
         )
 
     return notifications
-
 

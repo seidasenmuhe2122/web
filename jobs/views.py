@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 from .forms import ContactMessageForm
 from .models import BlogPost, Job, JobCategory, Advertisement, CustomPage, LegalPage, SiteSetting
 from .services.automation_run import claim_automation_run, finish_automation_run
+from .services.utils import safe_http_url
 
 
 @staff_member_required
@@ -75,7 +76,12 @@ def job_list(request):
         'jobs': jobs,
         'featured_jobs': featured_jobs,
         'job_types': Job.JOB_TYPE_CHOICES,
-        'experience_levels': Job.EXP_LEVEL_CHOICES,
+        'experience_levels': (
+            Job.objects.exclude(experience_level='')
+            .order_by('experience_level')
+            .values_list('experience_level', flat=True)
+            .distinct()
+        ),
         'display_mode': site_display_mode,
     }
     return render(request, 'jobs/job_list.html', context)
@@ -110,6 +116,7 @@ def job_detail(request, pk):
 
     context = {
         'job': job,
+        'apply_url': job.apply_link if safe_http_url(job.apply_link) else '',
         'inside_job_ad': inside_job_ad,
         'after_apply_ad': after_apply_ad,
     }

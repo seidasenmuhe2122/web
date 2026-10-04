@@ -13,7 +13,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import conditional_escape
 from html import unescape
 from django.conf import settings
-from ckeditor_uploader.widgets import CKEditorUploadingWidget
+from django_ckeditor_5.widgets import CKEditor5Widget
 from .forms import AdminEmailForm, ContactReplyForm
 from .models import (
     Advertisement,
@@ -53,7 +53,7 @@ class JobCategoryAdmin(admin.ModelAdmin):
 @admin.register(BlogPost)
 class BlogPostAdmin(admin.ModelAdmin):
     class BlogPostAdminForm(forms.ModelForm):
-        content = forms.CharField(widget=CKEditorUploadingWidget(config_name='default'))
+        content = forms.CharField(widget=CKEditor5Widget(config_name='default'))
 
         class Meta:
             model = BlogPost
@@ -840,6 +840,5 @@ class AutomationScheduleAdmin(admin.ModelAdmin):
             )
         }),
     )
-
 
 
