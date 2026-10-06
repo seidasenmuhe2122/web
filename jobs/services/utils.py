@@ -1,9 +1,11 @@
 import hashlib
 import os
 import re
+from html import escape, unescape
 from urllib.parse import urljoin
 from urllib.parse import urlsplit
 from django.utils.html import strip_tags
+
 
 def clean_text(value):
     value = strip_tags(value or '').replace('\r', '\n')
@@ -12,8 +14,109 @@ def clean_text(value):
     return value.strip()
 
 
+def _join_character_tokens(tokens):
+    if len(tokens) < 12 or not all(
+        len(token) == 1 and re.fullmatch(r'[A-Za-z0-9.,;:!?+\-/–—\s]', token)
+        for token in tokens
+    ):
+        return None
+
+    words = []
+    current = ''
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if token.isalnum():
+            current += token
+        elif token.isspace():
+            if current:
+                words.append(current)
+                current = ''
+        elif token == '.':
+            if re.fullmatch(r'[A-Z](?:\.[A-Za-z]{1,2})?', current):
+                current += token
+            else:
+                if index + 1 < len(tokens) and tokens[index + 1] == '.':
+                    if re.fullmatch(r'[A-Z](?:\.[A-Za-z]){1,3}', current):
+                        current += '.'
+                    if current:
+                        words.append(current)
+                        current = ''
+                    while index + 1 < len(tokens) and tokens[index + 1] == '.':
+                        index += 1
+                elif current:
+                    words.append(current)
+                    current = ''
+        elif token == ',':
+            if current:
+                words.append(current + ',')
+                current = ''
+        elif token in {'-', '+', '/', '–', '—'}:
+            current += token
+        else:
+            if current:
+                words.append(current)
+                current = ''
+        index += 1
+
+    if current:
+        words.append(current.rstrip('.,;:!?'))
+    text = ' '.join(word for word in words if word)
+    if len(text.split()) < 3:
+        return None
+
+    return text
+
+
+def _repair_character_list(match):
+    items = re.findall(r'<li\b[^>]*>(.*?)</li\s*>', match.group('items'), re.I | re.S)
+    tokens = []
+    for item in items:
+        token = unescape(strip_tags(item))
+        tokens.append(token if token.isspace() else token.strip())
+    text = _join_character_tokens(tokens)
+    if text is None:
+        return match.group(0)
+
+    return f'<ul><li>{escape(text)}</li></ul>'
+
+
+def _repair_character_lines(value):
+    lines = value.splitlines()
+    repaired = []
+    candidate_tokens = []
+    candidate_lines = []
+
+    def flush_candidate():
+        if not candidate_tokens:
+            return
+        text = _join_character_tokens(candidate_tokens)
+        repaired.extend([f'• {text}'] if text is not None else candidate_lines)
+        candidate_tokens.clear()
+        candidate_lines.clear()
+
+    for line in lines:
+        match = re.fullmatch(r'\s*[•·�]\s*(.*?)\s*', line)
+        token = match.group(1) if match else ''
+        if match and (not token or len(token) == 1):
+            candidate_tokens.append(token or ' ')
+            candidate_lines.append(line)
+        else:
+            flush_candidate()
+            repaired.append(line)
+
+    flush_candidate()
+    return '\n'.join(repaired)
+
+
 def repair_spaced_bullets(value):
-    parts = re.split(r'(<[^>]+>)', value or '')
+    value = re.sub(
+        r'<ul\b[^>]*>(?P<items>(?:\s*<li\b[^>]*>.*?</li\s*>)+\s*)</ul\s*>',
+        _repair_character_list,
+        value or '',
+        flags=re.I | re.S,
+    )
+    parts = re.split(r'(<[^>]+>)', value)
 
     for index, part in enumerate(parts):
         if part.startswith('<') and part.endswith('>'):
@@ -38,7 +141,7 @@ def repair_spaced_bullets(value):
         if lines:
             parts[index] = ''.join(lines)
 
-    return ''.join(parts)
+    return _repair_character_lines(''.join(parts))
 
 
 def normalize(value):

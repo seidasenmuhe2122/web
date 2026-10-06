@@ -938,6 +938,19 @@ class AutomationCycleTests(TestCase):
         self.assertNotIn('<h5>', summary)
         self.assertNotIn('• •', summary)
 
+    def test_telegram_summary_repairs_character_per_line_descriptions(self):
+        text = 'Requirements:\n' + '\n'.join(
+            f'• {character}'
+            for character in 'Degree in Chemistry and Industrial Engineering'
+        )
+
+        summary = _telegram_summary(text)
+
+        self.assertEqual(
+            summary,
+            'Requirements:\n• Degree in Chemistry and Industrial Engineering',
+        )
+
 
 class SecurityTests(TestCase):
 
@@ -955,6 +968,34 @@ class SecurityTests(TestCase):
         self.assertIn('BA Degree Accounting Finance Business Management', rendered)
         self.assertNotIn('&lt;h5&gt;', rendered)
         self.assertNotIn('<script>', rendered)
+
+    def test_job_description_collapses_character_by_character_list_items(self):
+        characters = 'B.Sc..Degree.in.Marketing.Management,0-1.years.of.experience'
+        description = '<h5>Requirements</h5><ul>' + ''.join(
+            f'<li>{character}</li>' for character in characters
+        ) + '</ul>'
+
+        rendered = job_description(description)
+
+        self.assertIn(
+            '<li>B.Sc. Degree in Marketing Management, 0-1 years of experience</li>',
+            rendered,
+        )
+        self.assertNotIn('<li>M</li>', rendered)
+
+    def test_job_description_collapses_character_per_line_descriptions(self):
+        description = 'Requirements:\n' + '\n'.join(
+            f'• {character}'
+            for character in 'Degree in Chemistry and Industrial Engineering'
+        )
+
+        rendered = job_description(description)
+
+        self.assertIn(
+            '<li>Degree in Chemistry and Industrial Engineering</li>',
+            rendered,
+        )
+        self.assertNotIn('<li>D</li>', rendered)
 
     @override_settings(RATE_LIMITS={'search': {'limit': 2, 'window': 60}})
     def test_rate_limit_returns_429_after_search_limit(self):
