@@ -9,8 +9,13 @@ from django.db.models import F, Q
 from django.urls import reverse
 from django.utils import timezone
 
-from ..models import TelegramDestination, TelegramNotification
-from .utils import repair_spaced_bullets, safe_error_message
+from ..models import SiteSetting, TelegramDestination, TelegramNotification
+from .utils import (
+    public_telegram_url,
+    repair_spaced_bullets,
+    safe_error_message,
+    strip_source_promotions,
+)
 
 
 def public_job_url(job, request=None):
@@ -201,7 +206,7 @@ class _TelegramDescriptionParser(HTMLParser):
 
 def _telegram_description_text(value):
     parser = _TelegramDescriptionParser()
-    parser.feed(unescape(str(value or '')))
+    parser.feed(unescape(strip_source_promotions(str(value or ''))))
     text = repair_spaced_bullets(''.join(parser.parts))
     lines = [
         re.sub(r'[ \t]+', ' ', line).strip()
@@ -318,6 +323,17 @@ def send_job_to_destination(job, destination):
             lines.extend([f'⏰ Deadline: {deadline}', ''])
 
         lines.extend(['👉 Full Details & Apply:', public_job_url(job)])
+        channel_url = public_telegram_url(destination.channel_id)
+        if channel_url:
+            site_settings = SiteSetting.objects.first()
+            channel_name = (
+                site_settings.site_name if site_settings else 'AFRI JOB ETHIOPIA'
+            )
+            lines.extend([
+                '',
+                f'📲 Follow {channel_name} on Telegram:',
+                channel_url,
+            ])
 
         text = '\n'.join(lines)
 

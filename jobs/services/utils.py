@@ -14,6 +14,55 @@ def clean_text(value):
     return value.strip()
 
 
+SOURCE_PROMOTION_MARKERS = (
+    r'\bjoin\b.{0,80}\b(?:telegram|our channel|the channel)\b',
+    r'\b(?:telegram jobs channel|please join our telegram channel)\b',
+    r'\b(?:get|receive)\s+(?:the\s+)?(?:latest|daily)\s+jobs?\b',
+    r'\bfollow\b.{0,60}\b(?:on\s+)?telegram\b',
+    r'\b(?:related posts|more jobs|share this job|search jobs|no results)\b',
+    r'^\s*tags\s*:?\s*$',
+)
+SOURCE_PROMOTION_RE = re.compile(
+    '|'.join(f'(?:{marker})' for marker in SOURCE_PROMOTION_MARKERS),
+    re.IGNORECASE,
+)
+
+
+def strip_source_promotions(value):
+    """Drop unrelated source-site marketing and related-job content after job facts."""
+    if not value:
+        return ''
+
+    kept_lines = []
+    for line in str(value).replace('\r\n', '\n').replace('\r', '\n').split('\n'):
+        marker = SOURCE_PROMOTION_RE.search(line)
+        if marker:
+            prefix = line[:marker.start()].strip(' \t-–—:|')
+            prefix = re.sub(
+                r'<(?:p|li|ul|ol|div|h[1-6])\b[^>]*>\s*$',
+                '',
+                prefix,
+                flags=re.IGNORECASE,
+            )
+            if prefix:
+                kept_lines.append(prefix)
+            break
+        kept_lines.append(line)
+
+    cleaned = '\n'.join(kept_lines)
+    cleaned = re.sub(r'[ \t]+\n', '\n', cleaned)
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    return cleaned.strip()
+
+
+def public_telegram_url(channel_id):
+    channel_id = str(channel_id or '').strip()
+    match = re.fullmatch(r'@?([A-Za-z0-9_]{5,})', channel_id)
+    if not match:
+        return ''
+    return f'https://t.me/{match.group(1)}'
+
+
 def _join_character_tokens(tokens):
     if len(tokens) < 12 or not all(
         len(token) == 1 and re.fullmatch(r'[A-Za-z0-9.,;:!?+\-/–—\s]', token)

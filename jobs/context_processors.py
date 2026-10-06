@@ -3,7 +3,8 @@ from django.conf import settings
 from django.templatetags.i18n import GetAvailableLanguagesNode
 from django.utils import translation
 
-from .models import Advertisement, CustomPage, Job, LegalPage, SiteSetting
+from .models import Advertisement, CustomPage, Job, LegalPage, SiteSetting, TelegramDestination
+from .services.utils import public_telegram_url
 
 
 ADMIN_LANGUAGES = (
@@ -72,6 +73,14 @@ def _page_context():
 
 def global_context(request):
     site_settings = SiteSetting.objects.first()
+    telegram_destination = next(
+        (
+            destination
+            for destination in TelegramDestination.objects.filter(enabled=True).order_by('id')
+            if public_telegram_url(destination.channel_id)
+        ),
+        None,
+    )
     contact_page = LegalPage.objects.filter(page_type='contact').first()
     advertisements = list(Advertisement.objects.filter(is_active=True).order_by('id'))
     placement_slots = (
@@ -106,6 +115,13 @@ def global_context(request):
     )
     context = {
         'site_settings': site_settings,
+        'telegram_channel_name': (
+            site_settings.site_name if site_settings else 'AFRI JOB ETHIOPIA'
+        ),
+        'telegram_channel_url': (
+            public_telegram_url(telegram_destination.channel_id)
+            if telegram_destination else ''
+        ),
         'display_mode': site_settings.job_display_mode if site_settings else 'work',
         'contact_page': contact_page,
         'frontend_languages': FRONTEND_LANGUAGES,

@@ -123,6 +123,10 @@ Do not make the description unnecessarily short.
 Include the purpose of the position, organization information, duties, responsibilities, qualifications, requirements, education, experience, employment type, location, salary, deadline and application instructions whenever those facts are available.
 Do not invent information that is not stated in the source.
 
+Exclude source-site promotions, newsletter or Telegram channel invitations, tags,
+sharing/search controls, and related-job lists from all job fields. Keep the employer's
+actual application instructions and contacts. Do not replace source branding with
+another organization's branding in the job description.
 Clean promotional text, emojis, repeated hashtags and tracking text, but do not remove useful job facts.
 
 Classify organization type only when explicitly supported by the source:

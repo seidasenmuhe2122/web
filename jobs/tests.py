@@ -576,6 +576,53 @@ class AutomationCycleTests(TestCase):
         self.assertNotContains(response, 'Apply Now')
 
     @patch('jobs.services.processor.extract_job')
+    def test_processor_drops_source_promotions_but_keeps_job_and_application_facts(self, extract_job):
+        extract_job.return_value = {
+            'is_job': True,
+            'title': 'Accountant',
+            'company': 'Example Company',
+            'location': 'Addis Ababa',
+            'description': (
+                'Manage the company accounts.\n\n'
+                'Join ETcareersJobs on Telegram\n'
+                'Get daily Jobs in Ethiopia\n'
+                'More jobs\nOromia Bank Vacancy'
+            ),
+            'category': 'Finance',
+            'job_type': 'Full-time',
+            'experience': 'Three years',
+            'requirements': ['Accounting degree'],
+            'responsibilities': ['Prepare monthly reports'],
+            'education': '',
+            'how_to_apply': ['Email your CV to hr@example.com'],
+            'application_url': '',
+            'contact_email': 'hr@example.com',
+            'contact_phone': '',
+            'contact_telegram': '',
+        }
+        raw = RawJobPost.objects.create(
+            external_id='job-with-source-promotion',
+            content=(
+                'Accountant position in Addis Ababa.\n'
+                'Applications close October 20.\n'
+                'Join ETcareersJobs on Telegram\n'
+                'Get daily Jobs in Ethiopia\n'
+                'More jobs\nOromia Bank Vacancy'
+            ),
+            content_hash='f' * 64,
+        )
+
+        job = process_raw(raw)
+
+        self.assertIsNotNone(job)
+        self.assertIn('Manage the company accounts.', job.description)
+        self.assertIn('Applications close October 20.', job.description)
+        self.assertIn('hr@example.com', job.description)
+        self.assertNotIn('ETcareersJobs', job.description)
+        self.assertNotIn('More jobs', job.description)
+        self.assertNotIn('Oromia Bank Vacancy', job.description)
+
+    @patch('jobs.services.processor.extract_job')
     def test_ai_failure_is_recorded_on_raw_post_and_processing_log(self, extract_job):
         extract_job.side_effect = RuntimeError('GROQ_API_KEY=provider-secret')
         raw = RawJobPost.objects.create(
@@ -951,8 +998,61 @@ class AutomationCycleTests(TestCase):
             'Requirements:\n• Degree in Chemistry and Industrial Engineering',
         )
 
+    def test_telegram_message_uses_configured_brand_and_omits_source_promotion(self):
+        job = Job.objects.create(
+            title='Accountant',
+            company_name='Example Company',
+            location='Addis Ababa',
+            description=(
+                '<p>Manage company accounts.</p>'
+                '<p>Join ETcareersJobs on Telegram</p>'
+                '<p>More jobs</p><p>Unrelated vacancy</p>'
+            ),
+        )
+        destination = TelegramDestination.objects.create(
+            name='Main jobs channel',
+            channel_id='@myjobschannel',
+        )
+        SiteSetting.objects.create(site_name='My Jobs Ethiopia')
+        sent_response = Mock()
+        sent_response.raise_for_status.return_value = None
+        sent_response.json.return_value = {
+            'ok': True,
+            'result': {'message_id': 124},
+        }
+
+        with patch.dict(os.environ, {'TELEGRAM_BOT_TOKEN': '123456:secret-token'}), patch(
+            'jobs.services.telegram_service.requests.post',
+            return_value=sent_response,
+        ) as post:
+            send_job_to_destination(job, destination)
+
+        sent_text = post.call_args.kwargs['json']['text']
+        self.assertIn('Manage company accounts.', sent_text)
+        self.assertIn('📲 Follow My Jobs Ethiopia on Telegram:', sent_text)
+        self.assertIn('https://t.me/myjobschannel', sent_text)
+        self.assertNotIn('ETcareersJobs', sent_text)
+        self.assertNotIn('Unrelated vacancy', sent_text)
 
 class SecurityTests(TestCase):
+
+    def test_job_detail_uses_configured_site_name_and_telegram_channel(self):
+        job = Job.objects.create(
+            title='Accountant',
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='Manage company accounts.',
+        )
+        SiteSetting.objects.create(site_name='My Jobs Ethiopia')
+        TelegramDestination.objects.create(
+            name='Main jobs channel',
+            channel_id='@myjobschannel',
+        )
+
+        response = self.client.get(reverse('job_detail', args=[job.pk]))
+
+        self.assertContains(response, 'Follow My Jobs Ethiopia on Telegram')
+        self.assertContains(response, 'https://t.me/myjobschannel')
 
     def test_job_description_decodes_escaped_markup_and_repairs_split_bullets(self):
         rendered = job_description(
@@ -968,6 +1068,20 @@ class SecurityTests(TestCase):
         self.assertIn('BA Degree Accounting Finance Business Management', rendered)
         self.assertNotIn('&lt;h5&gt;', rendered)
         self.assertNotIn('<script>', rendered)
+
+    def test_job_description_removes_promotions_from_existing_html_jobs(self):
+        rendered = job_description(
+            '<p>Applications close October 20.</p>'
+            '<p>📲 Join ETcareersJobs on Telegram</p>'
+            '<p>Get daily Jobs in Ethiopia</p>'
+            '<p>More jobs</p><p>Oromia Bank Vacancy</p>'
+        )
+
+        self.assertIn('Applications close October 20.', rendered)
+        self.assertNotIn('ETcareersJobs', rendered)
+        self.assertNotIn('More jobs', rendered)
+        self.assertNotIn('Oromia Bank Vacancy', rendered)
+        self.assertTrue(rendered.endswith('</p>'))
 
     def test_job_description_collapses_character_by_character_list_items(self):
         characters = 'B.Sc..Degree.in.Marketing.Management,0-1.years.of.experience'

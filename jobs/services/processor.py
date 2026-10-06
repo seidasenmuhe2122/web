@@ -4,7 +4,13 @@ from datetime import datetime
 from django.utils import timezone
 from .ai_service import AIProvidersUnavailable, extract_job
 from .dedupe_service import find_duplicate, fingerprint
-from .utils import clean_text, normalize, safe_error_message, safe_http_url
+from .utils import (
+    clean_text,
+    normalize,
+    safe_error_message,
+    safe_http_url,
+    strip_source_promotions,
+)
 from .scheduler_service import automation_timezone
 from ..models import RawJobPost, Job, JobCategory, JobProcessingLog
 
@@ -131,7 +137,9 @@ def process_raw(raw):
         title = _first_text(data.get('title'))
         company = _first_text(data.get('company'))
         location = _first_text(data.get('location'))
-        desc = _first_text(data.get('description')) or clean_text(raw.content)
+        desc = strip_source_promotions(
+            _first_text(data.get('description')) or clean_text(raw.content)
+        )
         if not title or not desc or not (company or location):
             raise ValueError('Insufficient job information: title, description, and company/location are required.')
         deadline = parse_deadline(_first_text(data.get('deadline')))
@@ -157,17 +165,31 @@ def process_raw(raw):
         jt = next((x for x in valid_types if x.lower() in job_type_text), 'Full-time')
         experience_text = _first_text(data.get('experience'))
         exp = experience_text[:200]
-        requirements = _text_items(data.get('requirements'))
-        responsibilities = _text_items(data.get('responsibilities'))
-        education = _text_items(data.get('education'))
+        requirements = [
+            cleaned for item in _text_items(data.get('requirements'))
+            if (cleaned := strip_source_promotions(item))
+        ]
+        responsibilities = [
+            cleaned for item in _text_items(data.get('responsibilities'))
+            if (cleaned := strip_source_promotions(item))
+        ]
+        education = [
+            cleaned for item in _text_items(data.get('education'))
+            if (cleaned := strip_source_promotions(item))
+        ]
         education.extend(
             item for item in _text_items(data.get('education_level'))
             if normalize(item) not in {normalize(value) for value in education}
         )
         experience = [experience_text] if experience_text else []
-        how_to_apply = _text_items(data.get('how_to_apply'))
+        how_to_apply = [
+            cleaned for item in _text_items(data.get('how_to_apply'))
+            if (cleaned := strip_source_promotions(item))
+        ]
         if not how_to_apply:
-            how_to_apply = _original_application_instructions(raw.content)
+            how_to_apply = _original_application_instructions(
+                strip_source_promotions(raw.content)
+            )
 
         contacts = []
         for label, field in (
@@ -209,7 +231,7 @@ def process_raw(raw):
         original_details = []
         source_chunks = re.split(
             r'(?<=[.!?])\s+(?=[A-Z])|\n+',
-            clean_text(raw.content),
+            strip_source_promotions(clean_text(raw.content)),
         )
         for line in source_chunks:
             line = clean_text(line)

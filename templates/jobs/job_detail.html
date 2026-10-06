@@ -48,6 +48,14 @@
                     {{ job.translated_description|job_description }}
                 </div>
 
+                {% if telegram_channel_url %}
+                    <div class="mt-4 text-center">
+                        <a href="{{ telegram_channel_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">
+                            <i class="fa-brands fa-telegram me-2"></i>{% blocktranslate with channel_name=telegram_channel_name %}Follow {{ channel_name }} on Telegram{% endblocktranslate %}
+                        </a>
+                    </div>
+                {% endif %}
+
                 {% if apply_url %}
                     <div class="mt-4 text-center">
                         <a href="{{ apply_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-success btn-lg px-5 fw-bold shadow-sm">

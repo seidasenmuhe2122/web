@@ -6,7 +6,7 @@ from django import template
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from bleach.css_sanitizer import CSSSanitizer
-from ..services.utils import repair_spaced_bullets
+from ..services.utils import repair_spaced_bullets, strip_source_promotions
 
 register = template.Library()
 
@@ -151,7 +151,14 @@ def _plain_job_description_html(value):
 
 @register.filter
 def job_description(value):
-    value = unescape(_repair_mojibake(str(value or '')))
+    value = strip_source_promotions(str(value or ''))
+    value = unescape(_repair_mojibake(value))
+    value = re.sub(
+        r'<(script|style)\b[^>]*>.*?</\1\s*>',
+        lambda match: str(escape(match.group(0))),
+        value,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
     value = repair_spaced_bullets(value)
     if re.search(r'<[a-z][^>]*>', value, flags=re.IGNORECASE):
         return mark_safe(_clean_html(value))
