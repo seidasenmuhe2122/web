@@ -11,6 +11,36 @@ def clean_text(value):
     value = re.sub(r'\n{3,}', '\n\n', value)
     return value.strip()
 
+
+def repair_spaced_bullets(value):
+    parts = re.split(r'(<[^>]+>)', value or '')
+
+    for index, part in enumerate(parts):
+        if part.startswith('<') and part.endswith('>'):
+            continue
+
+        lines = []
+        for line in part.splitlines(keepends=True):
+            ending = line[len(line.rstrip('\r\n')):]
+            content = line[:-len(ending)] if ending else line
+            prefix_match = re.match(r'^(\s*[•·]\s+)', content)
+            prefix = prefix_match.group(1) if prefix_match else ''
+            content = content[len(prefix):]
+
+            separators = re.findall(r'(?<=\w)\s*[•·]\s*(?=\w)', content)
+            single_characters = re.findall(r'(?<!\w)[A-Za-z0-9](?!\w)', content)
+            if len(separators) >= 8 and len(single_characters) >= 12:
+                content = re.sub(r'(?<=\w)\s*[•·]\s*(?=\w)', '', content)
+                content = re.sub(r'(?:\s*[•·])+\s*', ' ', content)
+
+            lines.append(prefix + content + ending)
+
+        if lines:
+            parts[index] = ''.join(lines)
+
+    return ''.join(parts)
+
+
 def normalize(value):
     value = clean_text(value).lower()
     value = re.sub(r'[^a-z0-9\u1200-\u137f]+', ' ', value)

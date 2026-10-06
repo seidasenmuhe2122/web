@@ -1,6 +1,8 @@
 import os
 import re
 from datetime import timedelta
+from html import unescape
+from html.parser import HTMLParser
 
 import requests
 from django.db.models import F, Q
@@ -8,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from ..models import TelegramDestination, TelegramNotification
-from .utils import safe_error_message
+from .utils import repair_spaced_bullets, safe_error_message
 
 
 def public_job_url(job, request=None):
@@ -165,12 +167,55 @@ def get_job_destinations(job):
     ]
 
 
+class _TelegramDescriptionParser(HTMLParser):
+    _BLOCK_TAGS = {
+        'blockquote', 'br', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'li', 'ol', 'p', 'ul',
+    }
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts = []
+        self.ignored_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {'script', 'style'}:
+            self.ignored_depth += 1
+        if self.ignored_depth:
+            return
+        if tag == 'li':
+            self.parts.append('\n• ')
+        elif tag in self._BLOCK_TAGS:
+            self.parts.append('\n')
+
+    def handle_endtag(self, tag):
+        if tag in {'script', 'style'} and self.ignored_depth:
+            self.ignored_depth -= 1
+        if not self.ignored_depth and tag in self._BLOCK_TAGS:
+            self.parts.append('\n')
+
+    def handle_data(self, data):
+        if not self.ignored_depth:
+            self.parts.append(data)
+
+
+def _telegram_description_text(value):
+    parser = _TelegramDescriptionParser()
+    parser.feed(unescape(str(value or '')))
+    text = repair_spaced_bullets(''.join(parser.parts))
+    lines = [
+        re.sub(r'[ \t]+', ' ', line).strip()
+        for line in text.splitlines()
+    ]
+    return re.sub(r'\n+', '\n', '\n'.join(lines)).strip()
+
+
 def _telegram_summary(text, limit=650):
     """
     Create a medium-length Telegram summary.
     The full description remains available on the website.
     """
-    text = re.sub(r'\s+', ' ', text or '').strip()
+    text = _telegram_description_text(text)
 
     if not text:
         return ''
@@ -357,4 +402,3 @@ def send_job(job, destinations=None):
         )
 
     return notifications
-

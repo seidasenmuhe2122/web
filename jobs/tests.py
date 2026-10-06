@@ -51,7 +51,11 @@ from .models import (
 )
 from .services.collectors import collect_website, save_raw
 from .services.processor import process_raw
-from .services.telegram_service import send_job, send_job_to_destination
+from .services.telegram_service import (
+    _telegram_summary,
+    send_job,
+    send_job_to_destination,
+)
 from .services.scheduler_service import automation_timezone, get_active_schedule
 from .templatetags.security_tags import job_description, sanitize_ad_code, sanitize_html
 from jopportal.middleware import RateLimitMiddleware
@@ -916,8 +920,41 @@ class AutomationCycleTests(TestCase):
 
         post.assert_not_called()
 
+    def test_telegram_summary_formats_html_and_repairs_split_bullets(self):
+        description = (
+            '&lt;h5&gt;Job Description&lt;/h5&gt;'
+            '&lt;p&gt;A friendly teacher.&lt;/p&gt;'
+            '&lt;h5&gt;Requirements&lt;/h5&gt;'
+            '&lt;ul&gt;&lt;li&gt;B • A • • D • e • g • r • e • e '
+            '• • A • c • c • o • u • n • t • i • n • g • • F • i • n • a '
+            '• n • c • e • • B • u • s • i • n • e • s • s '
+            '• • M • a • n • a • g • e • m • e • n • t&lt;/li&gt;&lt;/ul&gt;'
+        )
+
+        summary = _telegram_summary(description)
+
+        self.assertIn('Job Description\nA friendly teacher.', summary)
+        self.assertIn('Requirements\n• BA Degree Accounting Finance Business Management', summary)
+        self.assertNotIn('<h5>', summary)
+        self.assertNotIn('• •', summary)
+
 
 class SecurityTests(TestCase):
+
+    def test_job_description_decodes_escaped_markup_and_repairs_split_bullets(self):
+        rendered = job_description(
+            '&lt;h5&gt;Requirements&lt;/h5&gt;'
+            '&lt;p&gt;B • A • • D • e • g • r • e • e '
+            '• • A • c • c • o • u • n • t • i • n • g • • F • i • n • a '
+            '• n • c • e • • B • u • s • i • n • e • s • s '
+            '• • M • a • n • a • g • e • m • e • n • t&lt;/p&gt;'
+            '&lt;script&gt;alert(1)&lt;/script&gt;'
+        )
+
+        self.assertIn('<h5>Requirements</h5>', rendered)
+        self.assertIn('BA Degree Accounting Finance Business Management', rendered)
+        self.assertNotIn('&lt;h5&gt;', rendered)
+        self.assertNotIn('<script>', rendered)
 
     @override_settings(RATE_LIMITS={'search': {'limit': 2, 'window': 60}})
     def test_rate_limit_returns_429_after_search_limit(self):
