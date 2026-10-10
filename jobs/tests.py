@@ -1563,6 +1563,33 @@ class LegalPageTests(TestCase):
         self.assertContains(response, 'Find better work')
         self.assertContains(response, '© My New Jobs Brand. All rights reserved.')
 
+    def test_uploaded_site_logo_is_visible_and_served_when_debug_is_disabled(self):
+        with tempfile.TemporaryDirectory() as media_root, override_settings(
+            DEBUG=False,
+            MEDIA_ROOT=media_root,
+        ):
+            setting = SiteSetting.objects.create(
+                site_name='AFRI JOB ETHIOPIA',
+                site_logo=SimpleUploadedFile(
+                    'afri-job-logo.png',
+                    b'logo image bytes',
+                    content_type='image/png',
+                ),
+            )
+
+            page = self.client.get('/')
+            image = self.client.get(setting.site_logo.url)
+            try:
+                image_content = b''.join(image.streaming_content)
+            finally:
+                image.close()
+
+        self.assertContains(page, f'<link rel="icon" href="{setting.site_logo.url}">', html=False)
+        self.assertContains(page, f'src="{setting.site_logo.url}"', html=False)
+        self.assertContains(page, 'onerror="this.remove()"', html=False)
+        self.assertEqual(image.status_code, 200)
+        self.assertEqual(image_content, b'logo image bytes')
+
     def test_rich_branding_text_accepts_editor_markup_over_old_limit(self):
         setting = SiteSetting.objects.create(
             background_text='<p>' + ('Brand text ' * 40) + '</p>',

@@ -7,6 +7,8 @@
     <title>{% if site_settings %}{{ site_settings.site_name }}{% else %}AFRI JOB ETHIOPIA{% endif %}</title>
     {% if site_settings and site_settings.site_favicon %}
         <link rel="icon" href="{{ site_settings.site_favicon.url }}">
+    {% elif site_settings and site_settings.site_logo %}
+        <link rel="icon" href="{{ site_settings.site_logo.url }}">
     {% endif %}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -750,7 +752,7 @@
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}">
                 {% if site_settings and site_settings.site_logo %}
-                    <img src="{{ site_settings.site_logo.url }}" alt="{{ site_settings.site_name|default:'AFRI JOB ETHIOPIA' }}" class="me-2 rounded">
+                    <img src="{{ site_settings.site_logo.url }}" alt="" aria-hidden="true" onerror="this.remove()" class="me-2 rounded">
                 {% endif %}
                 <span class="fw-bold">
                     {% if site_settings %}{{ site_settings.site_name|default:'AFRI JOB ETHIOPIA' }}{% else %}AFRI JOB ETHIOPIA{% endif %}

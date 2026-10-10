@@ -1,15 +1,19 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
-from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import set_language as django_set_language
+from django.views.static import serve as serve_static
 from django.utils.translation import check_for_language
 from jobs import views as job_views
 
 
 LANGUAGE_CODES = {code for code, _ in settings.LANGUAGES}
 ADMIN_PATH = f'/{settings.ADMIN_URL.strip("/")}'
+
+
+def serve_media(request, path):
+    return serve_static(request, path, document_root=settings.MEDIA_ROOT)
 
 
 def _strip_locale_prefix(path):
@@ -84,6 +88,7 @@ def set_language_with_prefix(request):
 
 urlpatterns = [
     path('ckeditor5/', include('django_ckeditor_5.urls')),
+    path('media/<path:path>', serve_media, name='media'),
     path('i18n/setlang/', set_language_with_prefix, name='set_language'),
 ]
 
@@ -93,6 +98,3 @@ urlpatterns += i18n_patterns(
     path('', include('jobs.urls')),
     prefix_default_language=False,
 )
-
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

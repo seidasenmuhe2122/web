@@ -358,7 +358,7 @@ import os
 
 # Media Files Configuration (ለCompany Logo እና ማስታወቂያዎች)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = Path(os.environ.get('DJANGO_MEDIA_ROOT', BASE_DIR / 'media')).expanduser()
 ADVERTISEMENT_ALLOWED_HOSTS = {
     host.strip().lower()
     for host in os.environ.get('DJANGO_ADVERTISEMENT_ALLOWED_HOSTS', 'docs.google.com').split(',')

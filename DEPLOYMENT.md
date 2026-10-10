@@ -60,6 +60,13 @@ python manage.py runserver 0.0.0.0:8000
 
 For production, put a real WSGI/ASGI server and HTTPS reverse proxy in front of Django. The built-in `runserver` is for development only.
 
+Uploaded website logos, favicons, and other media are served from `/media/`. On Render,
+mount a persistent disk at `/var/data` and set `DJANGO_MEDIA_ROOT=/var/data/media` in the
+service environment; the default application directory is not persistent across deploys.
+After configuring the disk, upload the logo again in Website Settings (and upload a square
+favicon if desired). The logo is used as the favicon when no separate favicon is set. For
+larger production deployments, use object storage for uploaded media.
+
 ## Local development
 
 ```powershell
