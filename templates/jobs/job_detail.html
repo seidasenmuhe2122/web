@@ -1,6 +1,10 @@
 {% extends 'jobs/base.html' %}
 {% load i18n security_tags %}
 
+{% block page_title %}{{ job.title }} | AFRIJOB Ethiopia{% endblock %}
+{% block meta_description %}{{ job.title }} at {{ job.company_name }} in {{ job.location }}. View job details and application information on AFRIJOB Ethiopia.{% endblock %}
+{% block page_structured_data %}{% if job_structured_data %}<script type="application/ld+json">{{ job_structured_data|safe }}</script>{% endif %}{% endblock %}
+
 {% block content %}
 <div class="row job-detail-layout" style="--job-paper-width: {{ site_settings.job_paper_width|default:860 }}px; --job-paper-height: {{ site_settings.job_paper_height|default:700 }}px;">
     <div class="job-detail-main">
@@ -17,8 +21,8 @@
                             <img src="{{ job.company_logo.url }}" class="rounded me-3" style="max-width: 70px; max-height: 70px; object-fit: contain;">
                         {% endif %}
                         <div>
-                            <h3 class="fw-bold text-primary mb-1">{{ job.title }}</h3>
-                            <h5 class="text-muted"><i class="fa-solid fa-building me-1"></i> {{ job.company_name }}</h5>
+                            <h1 class="h3 fw-bold text-primary mb-1">{{ job.title }}</h1>
+                            <h2 class="text-muted h5"><i class="fa-solid fa-building me-1"></i> {{ job.company_name }}</h2>
                         </div>
                     </div>
                     <a href="{% url 'job_list' %}" class="btn btn-outline-secondary btn-sm text-nowrap" aria-label="Close and return to jobs">

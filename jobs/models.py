@@ -135,6 +135,62 @@ class Job(models.Model):
         return f"{self.title} - {self.company_name}"
 
 
+class PaginationStyle(models.Model):
+    PAGE_CHOICES = [
+        ('home', 'Home'),
+        ('jobs', 'Jobs'),
+        ('blog', 'Blog'),
+    ]
+    STYLE_CHOICES = [
+        ('pagination', 'Numbered pagination'),
+        ('load_more', 'Load more'),
+    ]
+
+    page = models.CharField(max_length=10, choices=PAGE_CHOICES, unique=True)
+    style = models.CharField(max_length=20, choices=STYLE_CHOICES, default='pagination')
+    items_per_page = models.PositiveSmallIntegerField(
+        default=10,
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(items_per_page__gte=1, items_per_page__lte=100),
+                name='pagination_items_per_page_1_100',
+            ),
+        ]
+        verbose_name = 'Pagination style'
+        verbose_name_plural = 'Pagination styles'
+
+    def __str__(self):
+        return f'{self.get_page_display()} - {self.get_style_display()}'
+
+
+class JobViewDaily(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='daily_views')
+    view_date = models.DateField()
+    views_count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('job', 'view_date'),
+                name='unique_job_daily_view',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=('view_date',), name='job_view_date_idx'),
+        ]
+        ordering = ('-view_date',)
+        verbose_name = 'Daily job views'
+        verbose_name_plural = 'Daily job views'
+
+    def __str__(self):
+        return f'{self.job} - {self.view_date}: {self.views_count}'
+
+
 class BlogPost(models.Model):
     title = models.CharField(max_length=200)
     slug = models.SlugField(unique=True, blank=True)

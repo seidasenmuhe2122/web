@@ -1,9 +1,21 @@
+from datetime import timedelta
+
 from django.db.models import Count, Q
 from django.conf import settings
 from django.templatetags.i18n import GetAvailableLanguagesNode
 from django.utils import translation
+from django.db.models import Sum
+from django.utils import timezone
 
-from .models import Advertisement, CustomPage, Job, LegalPage, SiteSetting, TelegramDestination
+from .models import (
+    Advertisement,
+    CustomPage,
+    Job,
+    JobViewDaily,
+    LegalPage,
+    SiteSetting,
+    TelegramDestination,
+)
 from .services.utils import public_telegram_url
 
 
@@ -72,6 +84,12 @@ def _page_context():
 
 
 def global_context(request):
+    canonical_page = request.path_info
+    if getattr(getattr(request, 'resolver_match', None), 'url_name', None) == 'home':
+        canonical_page = '/'
+    page_number = request.GET.get('page', '')
+    if page_number.isdigit() and int(page_number) > 1:
+        canonical_page = f'{canonical_page}?page={int(page_number)}'
     site_settings = SiteSetting.objects.first()
     telegram_destination = next(
         (
@@ -114,6 +132,7 @@ def global_context(request):
         urgent_jobs=Count('id', filter=Q(is_urgent=True)),
     )
     context = {
+        'seo_canonical_url': f'https://afrijob.world{canonical_page}',
         'site_settings': site_settings,
         'telegram_channel_name': (
             site_settings.site_name if site_settings else 'AFRI JOB ETHIOPIA'
@@ -150,5 +169,31 @@ def global_context(request):
             )[:5],
         },
     }
+    resolver_match = getattr(request, 'resolver_match', None)
+    if (
+        resolver_match
+        and resolver_match.namespace == 'admin'
+        and resolver_match.url_name == 'index'
+    ):
+        today = timezone.localdate()
+        tracked_views_today = JobViewDaily.objects.filter(
+            view_date=today,
+        ).aggregate(total=Sum('views_count'))['total'] or 0
+        tracked_views_last_7_days = JobViewDaily.objects.filter(
+            view_date__gte=today - timedelta(days=6),
+            view_date__lte=today,
+        ).aggregate(total=Sum('views_count'))['total'] or 0
+        context['admin_dashboard_stats'].update({
+            'job_views_total': Job.objects.aggregate(total=Sum('views_count'))['total'] or 0,
+            'job_views_today': tracked_views_today,
+            'job_views_last_7_days': tracked_views_last_7_days,
+            'top_viewed_jobs': Job.objects.order_by('-views_count', 'title')[:10],
+            'recently_viewed_jobs': Job.objects.filter(
+                daily_views__view_date__gte=today - timedelta(days=6),
+                daily_views__view_date__lte=today,
+            ).annotate(
+                recent_views=Sum('daily_views__views_count'),
+            ).order_by('-recent_views', 'title')[:10],
+        })
     context.update(_page_context())
     return context

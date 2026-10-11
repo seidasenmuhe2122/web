@@ -37,6 +37,45 @@
             </div>
         </section>
 
+        <section class="dashboard-section" aria-label="{% trans 'Job detail views' %}">
+            <h2>{% trans 'Job detail views' %}</h2>
+            <div class="dashboard-kpis">
+                <div class="dashboard-kpi">{% trans 'Total job detail views' %}<strong>{{ admin_dashboard_stats.job_views_total }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Tracked views today' %}<strong>{{ admin_dashboard_stats.job_views_today }}</strong></div>
+                <div class="dashboard-kpi">{% trans 'Tracked views in the last 7 days (since tracking began)' %}<strong>{{ admin_dashboard_stats.job_views_last_7_days }}</strong></div>
+            </div>
+            <table class="dashboard-table">
+                <thead><tr><th>{% trans 'Most-viewed job' %}</th><th>{% trans 'Company' %}</th><th>{% trans 'Total views' %}</th></tr></thead>
+                <tbody>
+                    {% for job in admin_dashboard_stats.top_viewed_jobs %}
+                        <tr>
+                            <td><a href="{% url 'admin:jobs_job_change' job.pk %}">{{ job.title }}</a></td>
+                            <td>{{ job.company_name }}</td>
+                            <td>{{ job.views_count }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">{% trans 'No job view data available.' %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <h3>{% trans 'Recently popular jobs (tracked views in the last 7 days)' %}</h3>
+            <table class="dashboard-table">
+                <thead><tr><th>{% trans 'Job' %}</th><th>{% trans 'Company' %}</th><th>{% trans 'Tracked views' %}</th></tr></thead>
+                <tbody>
+                    {% for job in admin_dashboard_stats.recently_viewed_jobs %}
+                        <tr>
+                            <td><a href="{% url 'admin:jobs_job_change' job.pk %}">{{ job.title }}</a></td>
+                            <td>{{ job.company_name }}</td>
+                            <td>{{ job.recent_views }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">{% trans 'No recent job view data available.' %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p><a class="button" href="{% url 'admin:jobs_job_changelist' %}?o=4">{% trans 'View most-viewed jobs' %}</a></p>
+        </section>
+
         <section class="dashboard-section" aria-label="{% trans 'Advertisement performance' %}">
             <h2>{% trans 'Advertisement performance' %}</h2>
             <div class="dashboard-kpis">

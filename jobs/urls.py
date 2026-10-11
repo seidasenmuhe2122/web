@@ -6,6 +6,7 @@ from . import views
 
 urlpatterns = [
     path('admin/', RedirectView.as_view(url=f'/{settings.ADMIN_URL}', permanent=False)),
+    path('', views.home_view, name='canonical_home'),
     path('', views.home_view, name='home'),
     path('home/', views.home_view, name='home'),
     path('jobs/', views.job_list, name='job_list'),
@@ -14,6 +15,8 @@ urlpatterns = [
     path('blog/', views.blog_list_view, name='blog_list'),
     path('blog/<slug:slug>/', views.blog_detail_view, name='blog_detail'),
     path('job/<int:pk>/', views.job_detail, name='job_detail'),
+    path('robots.txt', views.robots_txt, name='robots_txt'),
+    path('sitemap.xml', views.sitemap_xml, name='sitemap_xml'),
     path('advertisement/<int:pk>/impression.gif', views.advertisement_click, name='advertisement_impression'),
     path('advertisement/<int:pk>/click/', views.advertisement_click, name='advertisement_click'),
     path('privacy-policy/', views.legal_page, {'page_type': 'privacy'}, name='privacy_policy'),

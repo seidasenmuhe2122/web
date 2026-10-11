@@ -23,8 +23,10 @@ from .models import (
     Job,
     JobCategory,
     LegalPage,
+    PaginationStyle,
     SentEmail,
     SiteSetting,
+    JobViewDaily,
     JobSource,
     TelegramSource,
     TelegramDestination,
@@ -67,6 +69,29 @@ class BlogPostAdmin(admin.ModelAdmin):
     list_editable = ('is_published',)
     fields = ('title', 'slug', 'author', 'cover_image', 'excerpt', 'content', 'is_published', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
+
+
+@admin.register(PaginationStyle)
+class PaginationStyleAdmin(admin.ModelAdmin):
+    list_display = ('page', 'style', 'items_per_page', 'is_active')
+    list_filter = ('page', 'style', 'is_active')
+    list_editable = ('style', 'items_per_page', 'is_active')
+    ordering = ('page',)
+
+
+@admin.register(JobViewDaily)
+class JobViewDailyAdmin(admin.ModelAdmin):
+    list_display = ('job', 'view_date', 'views_count')
+    list_filter = ('view_date',)
+    search_fields = ('job__title', 'job__company_name')
+    ordering = ('-view_date', '-views_count')
+    readonly_fields = ('job', 'view_date', 'views_count')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 class SiteSettingAdminForm(forms.ModelForm):
@@ -137,16 +162,37 @@ class JobAdminForm(forms.ModelForm):
         fields = '__all__'
 
 
+class PopularJobsFilter(admin.SimpleListFilter):
+    title = 'popularity'
+    parameter_name = 'popularity'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('100', '100+ views'),
+            ('500', '500+ views'),
+            ('1000', '1,000+ views'),
+        )
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(views_count__gte=int(self.value()))
+        return queryset
+
+
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
     form = JobAdminForm
-    list_display = ('title', 'company_name', 'category', 'job_type', 'display_mode', 'is_featured', 'is_urgent')
-    list_filter = ('category', 'job_type', 'experience_level', 'is_featured', 'is_urgent')
+    list_display = ('title', 'company_name', 'category', 'job_type', 'views', 'display_mode', 'is_featured', 'is_urgent')
+    list_filter = ('category', 'job_type', 'experience_level', 'is_featured', 'is_urgent', PopularJobsFilter)
     search_fields = ('title', 'company_name', 'category__name')
     list_editable = ('display_mode', 'is_featured', 'is_urgent')
     readonly_fields = ('views_count', 'clicks_count')
     filter_horizontal = ('telegram_destinations',)
     list_per_page = 20
+
+    @admin.display(ordering='views_count', description='Views')
+    def views(self, obj):
+        return obj.views_count
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
@@ -840,5 +886,3 @@ class AutomationScheduleAdmin(admin.ModelAdmin):
             )
         }),
     )
-
-

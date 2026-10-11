@@ -1,6 +1,9 @@
 {% extends 'jobs/base.html' %}
 {% load i18n security_tags %}
 
+{% block page_title %}{{ post.title }} | AFRIJOB Ethiopia{% endblock %}
+{% block meta_description %}{{ post.excerpt|default:post.content|striptags|truncatechars:155 }}{% endblock %}
+
 {% block content %}
 <div class="container py-4">
     <div class="mb-4">

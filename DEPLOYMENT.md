@@ -25,6 +25,7 @@ DJANGO_EMAIL_HOST_PASSWORD=<gmail-app-password>
 DJANGO_EMAIL_USE_TLS=True
 DJANGO_DEFAULT_FROM_EMAIL=afrijobethiopia@gmail.com
 DJANGO_CACHE_URL=redis://:<password>@<redis-host>:6379/0
+DJANGO_JOB_VIEW_COUNT_INTERVAL_SECONDS=1800
 DJANGO_RATE_LIMIT_TRUST_X_FORWARDED_FOR=False
 DJANGO_AUTH_LOGIN_FAILURE_LIMIT=5
 DJANGO_AUTH_LOGIN_FAILURE_WINDOW=900
@@ -85,6 +86,14 @@ variables shown above, including `DJANGO_EMAIL_BACKEND` and `DJANGO_DEFAULT_FROM
 
 - Back up `db.sqlite3` and the `media/` directory before upgrades.
 - Run `python manage.py check --deploy` after changing production environment variables.
+- `python manage.py migrate` applies the pagination and daily job-view aggregation schema.
+  Configure Home, Jobs, and Blog under Admin > Jobs > Pagination styles; missing or inactive
+  settings retain the current unpaginated behavior. Items per page must be between 1 and 100.
+- Job detail views increment the existing cumulative job counter at most once per session and
+  job every 30 minutes by default. Set `DJANGO_JOB_VIEW_COUNT_INTERVAL_SECONDS` to adjust the
+  interval. Admin > Job detail views on the dashboard shows cumulative totals plus daily and
+  seven-day aggregates; daily history begins when view tracking is deployed and is not backfilled.
+  Daily statistics store only per-job counts and dates, not visitor identifiers.
 - Use a managed database and object storage for production scale.
 - Keep admin access behind HTTPS and strong authentication.
 - Set `DJANGO_CACHE_URL` to a shared Redis instance in multi-worker deployments so

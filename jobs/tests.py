@@ -1,19 +1,26 @@
 from datetime import datetime, time, timedelta, timezone as datetime_timezone
 from io import BytesIO, StringIO
+import json
 import os
+import re
 import tempfile
 from unittest.mock import Mock, patch
+from xml.etree import ElementTree
 
 import requests
 from PIL import Image
 from django import forms
 from django.core import mail
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.signals import user_login_failed
 from django.conf import settings
+from django.contrib.staticfiles import finders
+from django.contrib.staticfiles.views import serve as serve_static_asset
+from django.db import DatabaseError, IntegrityError, transaction
 from django.http import HttpResponse
 from django.test import Client, TestCase, override_settings
 from django.test import RequestFactory
@@ -22,7 +29,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.urls import reverse
 
-from .admin import AdvertisementTextWidget, JobAdminForm
+from .admin import AdvertisementTextWidget, JobAdmin, JobAdminForm, PaginationStyleAdmin
 from .services.ai_service import (
     AIProvidersUnavailable,
     DEFAULT_GEMINI_MODEL,
@@ -38,11 +45,14 @@ from .models import (
     AutomationControl,
     AutomationRun,
     AutomationSchedule,
+    BlogPost,
     ContactMessage,
     CustomPage,
     Job,
     JobSource,
     LegalPage,
+    JobViewDaily,
+    PaginationStyle,
     RawJobPost,
     SiteSetting,
     TelegramDestination,
@@ -1621,7 +1631,7 @@ class LegalPageTests(TestCase):
         preview = SiteSettingAdmin(SiteSetting, admin.site).public_preview(setting)
 
         self.assertIn('Open site', preview)
-        self.assertIn(reverse('home'), preview)
+        self.assertIn(        reverse('canonical_home'), preview)
 
     def test_admin_theme_config_returns_dashboard_customization(self):
         from django.contrib.auth import get_user_model
@@ -2313,3 +2323,460 @@ class LegalPageTests(TestCase):
         )
         contact_message.refresh_from_db()
         self.assertTrue(contact_message.is_read)
+
+
+class PaginationStyleTests(TestCase):
+    def make_job(self, title):
+        return Job.objects.create(
+            title=title,
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='Job description.',
+        )
+
+    def test_pagination_style_choices_validation_and_database_uniqueness(self):
+        self.assertEqual(
+            dict(PaginationStyle.PAGE_CHOICES),
+            {'home': 'Home', 'jobs': 'Jobs', 'blog': 'Blog'},
+        )
+        self.assertEqual(
+            dict(PaginationStyle.STYLE_CHOICES),
+            {'pagination': 'Numbered pagination', 'load_more': 'Load more'},
+        )
+        PaginationStyle.objects.create(page='home')
+
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                PaginationStyle.objects.create(page='home', style='load_more')
+
+        with self.assertRaises(ValidationError):
+            PaginationStyle(
+                page='jobs',
+                style='pagination',
+                items_per_page=101,
+            ).full_clean()
+
+    def test_pagination_style_is_registered_and_admin_access_is_permission_gated(self):
+        self.assertIsInstance(admin.site._registry[PaginationStyle], PaginationStyleAdmin)
+        staff_user = get_user_model().objects.create_user(
+            username='pagination-staff',
+            password='test-password',
+            is_staff=True,
+        )
+        self.client.force_login(staff_user)
+
+        denied = self.client.get(reverse('admin:jobs_paginationstyle_changelist'))
+        self.assertEqual(denied.status_code, 403)
+
+        superuser = get_user_model().objects.create_superuser(
+            username='pagination-admin',
+            email='pagination-admin@example.com',
+            password='test-password',
+        )
+        self.client.force_login(superuser)
+        allowed = self.client.get(reverse('admin:jobs_paginationstyle_changelist'))
+
+        self.assertEqual(allowed.status_code, 200)
+        self.assertContains(allowed, 'Pagination style')
+
+    def test_home_jobs_and_blog_use_independent_configurations(self):
+        jobs = [self.make_job(f'Job {index}') for index in range(3)]
+        blog_posts = [
+            BlogPost.objects.create(
+                title=f'Blog post {index}',
+                content='Article text.',
+            )
+            for index in range(3)
+        ]
+        PaginationStyle.objects.create(page='home', items_per_page=1)
+        PaginationStyle.objects.create(page='jobs', items_per_page=2)
+        PaginationStyle.objects.create(page='blog', items_per_page=1)
+
+        home_response = self.client.get(reverse('home'))
+        jobs_response = self.client.get(reverse('job_list'))
+        blog_response = self.client.get(reverse('blog_list'))
+
+        self.assertEqual(len(home_response.context['jobs']), 1)
+        self.assertEqual(home_response.context['page_obj'].paginator.count, 3)
+        self.assertEqual(len(jobs_response.context['jobs']), 2)
+        self.assertEqual(jobs_response.context['page_obj'].paginator.count, 3)
+        self.assertEqual(len(blog_response.context['posts']), 1)
+        self.assertEqual(blog_response.context['page_obj'].paginator.count, 3)
+        self.assertEqual(
+            list(home_response.context['jobs'])[0].pk,
+            jobs[-1].pk,
+        )
+        self.assertEqual(
+            list(blog_response.context['posts'])[0].pk,
+            blog_posts[-1].pk,
+        )
+        self.assertContains(home_response, 'page=2')
+        self.assertContains(jobs_response, 'page=2')
+        self.assertContains(blog_response, 'page=2')
+
+    def test_missing_or_inactive_configuration_preserves_unpaginated_lists(self):
+        for index in range(3):
+            self.make_job(f'Unpaginated job {index}')
+        PaginationStyle.objects.create(page='jobs', items_per_page=1, is_active=False)
+
+        response = self.client.get(reverse('job_list'))
+
+        self.assertEqual(len(response.context['jobs']), 3)
+        self.assertNotIn('page_obj', response.context)
+        self.assertNotContains(response, 'data-load-more')
+
+    def test_load_more_includes_last_batch_and_handles_empty_results(self):
+        jobs = [self.make_job(f'Load more job {index}') for index in range(3)]
+        PaginationStyle.objects.create(
+            page='jobs',
+            style='load_more',
+            items_per_page=2,
+        )
+
+        first_batch = self.client.get(reverse('job_list'))
+        last_batch = self.client.get(reverse('job_list'), {'page': 2})
+
+        self.assertEqual(len(first_batch.context['jobs']), 2)
+        self.assertContains(first_batch, 'data-load-more')
+        self.assertContains(first_batch, 'jobs/js/load_more.js')
+        self.assertEqual(len(last_batch.context['jobs']), 1)
+        self.assertEqual(list(last_batch.context['jobs'])[0].pk, jobs[0].pk)
+        self.assertNotContains(last_batch, 'data-load-more')
+
+        Job.objects.all().delete()
+        empty_batch = self.client.get(reverse('job_list'))
+        self.assertEqual(empty_batch.status_code, 200)
+        self.assertEqual(len(empty_batch.context['jobs']), 0)
+        self.assertContains(empty_batch, 'No jobs found.')
+        self.assertNotContains(empty_batch, 'data-load-more')
+
+    def test_blog_load_more_uses_shared_script_and_returns_final_batch(self):
+        for index in range(3):
+            BlogPost.objects.create(
+                title=f'Load more post {index}',
+                content='Article text.',
+            )
+        PaginationStyle.objects.create(
+            page='blog',
+            style='load_more',
+            items_per_page=2,
+        )
+
+        first_batch = self.client.get(reverse('blog_list'))
+        final_batch = self.client.get(reverse('blog_list'), {'page': 2})
+
+        self.assertEqual(len(first_batch.context['posts']), 2)
+        self.assertContains(first_batch, 'data-items-target="blog-pagination-items"')
+        self.assertContains(first_batch, 'jobs/js/load_more.js')
+        self.assertEqual(len(final_batch.context['posts']), 1)
+        self.assertNotContains(final_batch, 'data-load-more')
+
+
+class JobViewTrackingTests(TestCase):
+    def make_job(self, title='Tracked job', views_count=0):
+        return Job.objects.create(
+            title=title,
+            company_name='Example Company',
+            location='Addis Ababa',
+            description='Job description.',
+            views_count=views_count,
+        )
+
+    def test_successful_detail_counts_once_per_session_and_preserves_existing_count(self):
+        job = self.make_job(views_count=7)
+        detail_url = reverse('job_detail', args=[job.pk])
+
+        first_response = self.client.get(detail_url)
+        job.refresh_from_db()
+        first_daily_view = JobViewDaily.objects.get(job=job, view_date=timezone.localdate())
+        second_response = self.client.get(detail_url)
+        job.refresh_from_db()
+
+        self.assertEqual(first_response.status_code, 200)
+        self.assertEqual(second_response.status_code, 200)
+        self.assertEqual(job.views_count, 8)
+        self.assertEqual(first_daily_view.views_count, 1)
+        self.assertEqual(job.title, 'Tracked job')
+
+    def test_listings_failed_details_and_obvious_crawlers_do_not_increment(self):
+        job = self.make_job()
+
+        listing_response = self.client.get(reverse('job_list'))
+        missing_response = self.client.get(reverse('job_detail', args=[job.pk + 999]))
+        crawler_response = self.client.get(
+            reverse('job_detail', args=[job.pk]),
+            HTTP_USER_AGENT='facebookexternalhit/1.1',
+        )
+        preview_response = self.client.get(
+            reverse('job_detail', args=[job.pk]),
+            {'preview': 'true'},
+        )
+
+        job.refresh_from_db()
+        self.assertEqual(listing_response.status_code, 200)
+        self.assertEqual(missing_response.status_code, 404)
+        self.assertEqual(crawler_response.status_code, 200)
+        self.assertEqual(preview_response.status_code, 200)
+        self.assertEqual(job.views_count, 0)
+        self.assertFalse(JobViewDaily.objects.exists())
+
+    @override_settings(JOB_VIEW_COUNT_INTERVAL_SECONDS=0)
+    def test_atomic_counter_counts_distinct_views_and_updates_daily_aggregate(self):
+        job = self.make_job(views_count=4)
+        detail_url = reverse('job_detail', args=[job.pk])
+
+        self.client.get(detail_url)
+        self.client.get(detail_url)
+
+        job.refresh_from_db()
+        daily_view = JobViewDaily.objects.get(job=job, view_date=timezone.localdate())
+        self.assertEqual(job.views_count, 6)
+        self.assertEqual(daily_view.views_count, 2)
+
+    def test_tracking_failure_does_not_prevent_render_or_partially_increment_counter(self):
+        job = self.make_job()
+        with self.assertLogs('jobs.views', level='ERROR'):
+            with patch(
+                'jobs.views.JobViewDaily.objects.get_or_create',
+                side_effect=DatabaseError('daily analytics unavailable'),
+            ):
+                response = self.client.get(reverse('job_detail', args=[job.pk]))
+
+        job.refresh_from_db()
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, job.title)
+        self.assertEqual(job.views_count, 0)
+        self.assertFalse(JobViewDaily.objects.exists())
+
+    def test_admin_displays_sorts_and_reports_job_view_analytics(self):
+        low_views = self.make_job('Low views', views_count=5)
+        high_views = self.make_job('High views', views_count=50)
+        JobViewDaily.objects.create(
+            job=low_views,
+            view_date=timezone.localdate(),
+            views_count=3,
+        )
+        JobViewDaily.objects.create(
+            job=high_views,
+            view_date=timezone.localdate() - timedelta(days=3),
+            views_count=7,
+        )
+        JobViewDaily.objects.create(
+            job=high_views,
+            view_date=timezone.localdate() - timedelta(days=8),
+            views_count=11,
+        )
+        superuser = get_user_model().objects.create_superuser(
+            username='job-views-admin',
+            email='job-views-admin@example.com',
+            password='test-password',
+        )
+        self.client.force_login(superuser)
+
+        changelist = self.client.get(
+            reverse('admin:jobs_job_changelist'),
+            {'o': '4'},
+        )
+        dashboard = self.client.get(reverse('admin:index'))
+        result_jobs = list(changelist.context['cl'].result_list)
+        dashboard_stats = dashboard.context['admin_dashboard_stats']
+
+        self.assertIn('views', JobAdmin.list_display)
+        self.assertEqual(JobAdmin.views.admin_order_field, 'views_count')
+        self.assertEqual(result_jobs[0].pk, high_views.pk)
+        self.assertEqual(dashboard_stats['job_views_total'], 55)
+        self.assertEqual(dashboard_stats['job_views_today'], 3)
+        self.assertEqual(dashboard_stats['job_views_last_7_days'], 10)
+        self.assertEqual(
+            list(dashboard_stats['top_viewed_jobs'])[0].pk,
+            high_views.pk,
+        )
+        recently_popular = list(dashboard_stats['recently_viewed_jobs'])
+        self.assertEqual(recently_popular[0].pk, high_views.pk)
+        self.assertEqual(recently_popular[0].recent_views, 7)
+
+
+class PublicSeoTests(TestCase):
+    def create_job(self, title='SEO job', **kwargs):
+        job_fields = {
+            'company_name': 'AFRIJOB employer',
+            'location': 'Addis Ababa',
+            'country': '',
+            'description': 'A genuine job description.',
+            'deadline': timezone.localdate() + timedelta(days=20),
+        }
+        job_fields.update(kwargs)
+        return Job.objects.create(
+            title=title,
+            **job_fields,
+        )
+
+    def create_legal_page(self, page_type, title):
+        page, _ = LegalPage.objects.update_or_create(
+            page_type=page_type,
+            defaults={
+                'title': title,
+                'content': 'Useful information for visitors.',
+            },
+        )
+        return page
+
+    def test_static_afrijob_favicons_exist_have_requested_dimensions_and_serve_as_png(self):
+        for size in (48, 96):
+            relative_path = f'jobs/img/afrijob-favicon-{size}.png'
+            static_path = finders.find(relative_path)
+            self.assertIsNotNone(static_path)
+            with Image.open(static_path) as image:
+                self.assertEqual(image.format, 'PNG')
+                self.assertEqual(image.size, (size, size))
+
+            response = serve_static_asset(
+                RequestFactory().get(f'/static/{relative_path}'),
+                relative_path,
+                insecure=True,
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response['Content-Type'], 'image/png')
+
+    def test_shared_metadata_navigation_and_page_specific_titles_render(self):
+        job = self.create_job('Senior Accountant')
+        self.create_legal_page('about', 'About AFRIJOB')
+        self.create_legal_page('contact', 'Contact AFRIJOB')
+        post = BlogPost.objects.create(
+            title='Career planning guide',
+            excerpt='Practical career advice for job seekers.',
+            content='Article details.',
+        )
+        page_urls = (
+            (reverse('home'), 'AFRIJOB Ethiopia | Latest Jobs and Career Opportunities'),
+            (reverse('job_list'), 'Jobs in Ethiopia | Find the Latest Vacancies – AFRIJOB'),
+            (reverse('job_detail', args=[job.pk]), 'Senior Accountant | AFRIJOB Ethiopia'),
+            (reverse('about_us'), 'About AFRIJOB | Ethiopian Job Opportunities'),
+            (reverse('contact_us'), 'Contact AFRIJOB'),
+            (reverse('blog_list'), 'Career Advice and Employment News | AFRIJOB'),
+            (reverse('blog_detail', args=[post.slug]), 'Career planning guide | AFRIJOB Ethiopia'),
+        )
+
+        for url, expected_title in page_urls:
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, f'<title>{expected_title}</title>', html=False)
+                self.assertContains(response, 'name="description"', html=False)
+                self.assertContains(response, 'rel="canonical"', html=False)
+                self.assertContains(
+                    response,
+                    '/static/jobs/img/afrijob-favicon-48.png',
+                    html=False,
+                )
+
+        home_response = self.client.get(reverse('home'))
+        self.assertContains(home_response, 'href="/jobs/"')
+        self.assertContains(home_response, 'href="/about-us/"')
+        self.assertContains(home_response, 'href="/contact-us/"')
+        self.assertContains(home_response, 'href="/blog/"')
+        self.assertContains(home_response, 'navbar-brand d-flex align-items-center')
+
+        detail_response = self.client.get(reverse('job_detail', args=[job.pk]))
+        self.assertContains(detail_response, f'<h1 class="h3 fw-bold text-primary mb-1">{job.title}</h1>', html=False)
+        structured_scripts = re.findall(
+            r'<script type="application/ld\+json">(.*?)</script>',
+            home_response.content.decode(),
+            re.DOTALL,
+        )
+        site_graph = json.loads(structured_scripts[0])
+        self.assertEqual(site_graph['@graph'][0]['name'], 'AFRIJOB Ethiopia')
+        self.assertEqual(site_graph['@graph'][1]['url'], 'https://afrijob.world/')
+
+    def test_canonical_uses_domain_and_keeps_page_number_without_search_parameters(self):
+        response = self.client.get(
+            f"{reverse('job_list')}?q=accountant&page=3&unused=1",
+        )
+
+        self.assertContains(
+            response,
+            '<link rel="canonical" href="https://afrijob.world/jobs/?page=3">',
+            html=False,
+        )
+        home_response = self.client.get(reverse('home'))
+        self.assertContains(
+            home_response,
+            '<link rel="canonical" href="https://afrijob.world/">',
+            html=False,
+        )
+
+    def test_robots_and_sitemap_are_valid_and_exclude_non_public_records(self):
+        self.create_legal_page('about', 'About AFRIJOB')
+        active_job = self.create_job('Current job')
+        expired_job = self.create_job(
+            'Expired job',
+            deadline=timezone.localdate() - timedelta(days=1),
+        )
+        public_post = BlogPost.objects.create(
+            title='Published guide',
+            content='Published details.',
+            is_published=True,
+        )
+        draft_post = BlogPost.objects.create(
+            title='Unpublished guide',
+            content='Private draft.',
+            is_published=False,
+        )
+
+        robots_response = self.client.get(reverse('robots_txt'))
+        sitemap_response = self.client.get(reverse('sitemap_xml'))
+        sitemap_root = ElementTree.fromstring(sitemap_response.content)
+        locations = {
+            node.text
+            for node in sitemap_root.findall(
+                '{http://www.sitemaps.org/schemas/sitemap/0.9}url/'
+                '{http://www.sitemaps.org/schemas/sitemap/0.9}loc'
+            )
+        }
+
+        self.assertEqual(robots_response.status_code, 200)
+        self.assertIn('Allow: /', robots_response.content.decode())
+        self.assertIn('Allow: /static/', robots_response.content.decode())
+        self.assertIn(
+            f'Disallow: /{settings.ADMIN_URL}',
+            robots_response.content.decode(),
+        )
+        self.assertIn('Sitemap: https://afrijob.world/sitemap.xml', robots_response.content.decode())
+        self.assertEqual(sitemap_response.status_code, 200)
+        self.assertEqual(sitemap_response['Content-Type'], 'application/xml; charset=utf-8')
+        self.assertIn('https://afrijob.world/', locations)
+        self.assertIn(f'https://afrijob.world/job/{active_job.pk}/', locations)
+        self.assertIn(f'https://afrijob.world/blog/{public_post.slug}/', locations)
+        self.assertNotIn(f'https://afrijob.world/job/{expired_job.pk}/', locations)
+        self.assertNotIn(f'https://afrijob.world/blog/{draft_post.slug}/', locations)
+
+    def test_job_posting_structured_data_only_uses_complete_unexpired_job_facts(self):
+        eligible_job = self.create_job('Eligible role')
+        response = self.client.get(reverse('job_detail', args=[eligible_job.pk]))
+        self.assertNotContains(response, '"@type": "JobPosting"')
+
+        eligible_job.deadline = timezone.localdate() + timedelta(days=5)
+        eligible_job.country = 'Ethiopia'
+        eligible_job.save(update_fields=('deadline', 'country'))
+        structured_response = self.client.get(reverse('job_detail', args=[eligible_job.pk]))
+        matches = re.findall(
+            r'<script type="application/ld\+json">(.*?)</script>',
+            structured_response.content.decode(),
+            re.DOTALL,
+        )
+        job_posting = next(
+            data for data in (json.loads(match) for match in matches)
+            if data.get('@type') == 'JobPosting'
+        )
+        self.assertEqual(job_posting['@type'], 'JobPosting')
+        self.assertEqual(job_posting['title'], eligible_job.title)
+        self.assertEqual(job_posting['hiringOrganization']['name'], eligible_job.company_name)
+        self.assertEqual(job_posting['jobLocation']['address']['addressCountry'], 'Ethiopia')
+        self.assertEqual(job_posting['validThrough'], eligible_job.deadline.isoformat())
+
+        expired_job = self.create_job(
+            'Expired role',
+            deadline=timezone.localdate() - timedelta(days=1),
+        )
+        expired_response = self.client.get(reverse('job_detail', args=[expired_job.pk]))
+        self.assertNotContains(expired_response, '"@type": "JobPosting"')

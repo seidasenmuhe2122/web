@@ -1,5 +1,8 @@
 {% extends 'jobs/base.html' %}
-{% load i18n %}
+{% load i18n static %}
+
+{% block page_title %}Career Advice and Employment News | AFRIJOB{% endblock %}
+{% block meta_description %}Read career advice, employment news, and practical insights for job seekers in Ethiopia from AFRIJOB.{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -8,10 +11,10 @@
             <p class="text-uppercase small text-info mb-1" style="letter-spacing: 0.12em;">{% translate "Insights" %}</p>
             <h1 class="mb-0 text-white">{% translate "Blog" %}</h1>
         </div>
-        <a href="{% url 'home' %}" class="btn btn-outline-light">{% translate "Back home" %}</a>
+        <a href="{% url 'canonical_home' %}" class="btn btn-outline-light">{% translate "Back home" %}</a>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4" id="blog-pagination-items" aria-live="polite">
         {% for post in posts %}
         <div class="col-lg-6">
             <article class="card job-card h-100 border-0 rounded-4 overflow-hidden">
@@ -44,5 +47,33 @@
         </div>
         {% endfor %}
     </div>
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+        <nav class="mt-4" aria-label="{% translate 'Blog pages' %}">
+            {% if pagination_style == 'load_more' %}
+                {% if page_obj.has_next %}
+                    <div class="text-center">
+                        <a id="blog-load-more" class="btn btn-outline-light" data-load-more data-items-target="blog-pagination-items" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">
+                            {% translate "Load More" %}
+                        </a>
+                    </div>
+                    <script src="{% static 'jobs/js/load_more.js' %}" defer></script>
+                {% endif %}
+            {% else %}
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a></li>
+                    {% endif %}
+                    {% for page_number in pagination_page_numbers %}
+                        <li class="page-item{% if page_number == page_obj.number %} active{% endif %}">
+                            <a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_number }}">{{ page_number }}</a>
+                        </li>
+                    {% endfor %}
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a></li>
+                    {% endif %}
+                </ul>
+            {% endif %}
+        </nav>
+    {% endif %}
 </div>
 {% endblock %}

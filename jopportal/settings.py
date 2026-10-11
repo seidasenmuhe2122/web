@@ -180,6 +180,9 @@ CACHES = {
         'LOCATION': cache_location or 'jopportal-rate-limit',
     },
 }
+JOB_VIEW_COUNT_INTERVAL_SECONDS = int(
+    os.environ.get('DJANGO_JOB_VIEW_COUNT_INTERVAL_SECONDS', '1800')
+)
 
 CSRF_TRUSTED_ORIGINS = [
     origin.strip()

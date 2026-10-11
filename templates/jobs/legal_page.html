@@ -1,6 +1,9 @@
 {% extends 'jobs/base.html' %}
 {% load i18n security_tags %}
 
+{% block page_title %}{% if page.page_type == 'about' %}About AFRIJOB | Ethiopian Job Opportunities{% elif page.page_type == 'contact' %}Contact AFRIJOB{% else %}{{ page.title }} | AFRIJOB Ethiopia{% endif %}{% endblock %}
+{% block meta_description %}{% if page.page_type == 'about' %}Learn about AFRIJOB and our mission to connect people with job opportunities in Ethiopia.{% elif page.page_type == 'contact' %}Contact AFRIJOB Ethiopia for questions, support, or general inquiries.{% else %}{{ page.title }} - information and resources from AFRIJOB Ethiopia.{% endif %}{% endblock %}
+
 {% block content %}
 <article class="card shadow-sm border-0 legal-page">
     <div class="card-body p-4 p-lg-5" style="color: {{ page.text_color }}; font-size: {{ page.font_size }}px;">

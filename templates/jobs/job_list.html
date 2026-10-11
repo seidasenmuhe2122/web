@@ -1,5 +1,8 @@
 {% extends 'jobs/base.html' %}
-{% load i18n security_tags %}
+{% load i18n security_tags static %}
+
+{% block page_title %}{% if seo_page_name == 'home' %}AFRIJOB Ethiopia | Latest Jobs and Career Opportunities{% else %}Jobs in Ethiopia | Find the Latest Vacancies – AFRIJOB{% endif %}{% endblock %}
+{% block meta_description %}{% if seo_page_name == 'home' %}Explore the latest jobs and career opportunities across Ethiopia with AFRIJOB.{% else %}Search current vacancies in Ethiopia by job title, company, location, job type, and experience on AFRIJOB.{% endif %}{% endblock %}
 
 {% block content %}
 {% if not site_settings or site_settings.show_hero %}<div class="hero-3d glass-panel mb-4">
@@ -17,7 +20,7 @@
             <div class="glass-panel p-3 rounded-4">
                 <div class="d-flex justify-content-between text-white-50 small mb-2">
                     <span>{% translate "Active Jobs" %}</span>
-                    <span>{{ jobs.count }}</span>
+                    <span>{% if page_obj %}{{ page_obj.paginator.count }}{% else %}{{ jobs.count }}{% endif %}</span>
                 </div>
                 <div class="progress mb-3" style="height: 8px;">
                     <div class="progress-bar bg-gradient" role="progressbar" style="width: 72%; background: linear-gradient(90deg, #38bdf8, #a855f7);"></div>
@@ -120,8 +123,9 @@
     </div>
 
     <div class="col-lg-6">
-        {% if jobs %}
-            {% for job in jobs %}
+        <div id="jobs-pagination-items" aria-live="polite">
+            {% if jobs %}
+                {% for job in jobs %}
                 {% if job.effective_display_mode == 'previous' %}
                 <article class="card job-card previous-job-paper shadow-sm mb-3 border-0" style="--job-paper-background-color: {% if site_settings %}{{ site_settings.job_paper_background_color }}{% else %}#ffffff{% endif %};{% if site_settings and site_settings.job_paper_background_image %} background-image: linear-gradient(rgba(255,255,255,0.88), rgba(255,255,255,0.88)), url('{{ site_settings.job_paper_background_image.url }}');{% endif %}">
                     <div class="card-body p-4">
@@ -248,12 +252,41 @@
                     </div>
                 </article>
                 {% endif %}
-            {% endfor %}
-        {% else %}
-            <div class="alert alert-info text-center py-4 rounded-4">
-                <h5>{% translate "No jobs found." %}</h5>
-                <p class="mb-0">{% translate "Please add a new job from the Admin Dashboard." %}</p>
-            </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info text-center py-4 rounded-4">
+                    <h5>{% translate "No jobs found." %}</h5>
+                    <p class="mb-0">{% translate "Please add a new job from the Admin Dashboard." %}</p>
+                </div>
+            {% endif %}
+        </div>
+        {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <nav class="mt-4" aria-label="{% translate 'Job pages' %}">
+                {% if pagination_style == 'load_more' %}
+                    {% if page_obj.has_next %}
+                        <div class="text-center">
+                            <a id="jobs-load-more" class="btn btn-outline-light" data-load-more data-items-target="jobs-pagination-items" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">
+                                {% translate "Load More" %}
+                            </a>
+                        </div>
+                        <script src="{% static 'jobs/js/load_more.js' %}" defer></script>
+                    {% endif %}
+                {% else %}
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">{% translate "Previous" %}</a></li>
+                        {% endif %}
+                        {% for page_number in pagination_page_numbers %}
+                            <li class="page-item{% if page_number == page_obj.number %} active{% endif %}">
+                                <a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_number }}">{{ page_number }}</a>
+                            </li>
+                        {% endfor %}
+                        {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">{% translate "Next" %}</a></li>
+                        {% endif %}
+                    </ul>
+                {% endif %}
+            </nav>
         {% endif %}
     </div>
 
